@@ -52,10 +52,6 @@ if args['--consec']:
 else:
     consec = 5
 
-if args['--mag']:
-    mag_window = int(args['--mag'])
-else:
-    mag_window = 10
 
 if args['--thresh']:
     thresh = float(args['--thresh'])
@@ -180,8 +176,6 @@ def get_abs(image):
     # 3. Date of change if 1 = 1. Default: 0
     # 4. Magnitude of change
     # 5. iterator 
-    # 6. Consecutive observations passed threshold w/o resetting
-    # 7. long-term change magnitude
     
 # image = image in collection 
 def monitor_func(image, new_image):
@@ -194,10 +188,6 @@ def monitor_func(image, new_image):
                  ee.Image(new_image).select('band_2').lt(ee.Image(consec))).unmask() # not passed consec thresh
                
   cloud_mask = ee.Image(image).select('NFDI').mask().neq(ee.Image(0))
-               
-  mag_mask_nc = ee.Image(new_image).select('band_1').eq(ee.Image(0)).multiply(
-                ee.Image(new_image).select('band_8').eq(ee.Image(1))).unmask()
-
   image_monitor = image.unmask()
 
   # Get normalized residual
@@ -208,27 +198,22 @@ def monitor_func(image, new_image):
   # 1 if norm_res > threshold
   # 0 if norm res < threshold, cloud mask
   gt_thresh = ee.Image(norm_res).abs().gt(ee.Image(thresh)).multiply(zero_mask_nc).multiply(cloud_mask)
-  #gt_thresh_mag = ee.Image(norm_res).abs().gt(ee.Image(0)).multiply(mag_mask_nc)
-  gt_thresh_mag = mag_mask_nc.multiply(cloud_mask)
   
   # Band 2: Consecutive observations beyond threshold
   # = # consecutive observations > threshold
   _band_2 = ee.Image(new_image).select('band_2').add(gt_thresh).multiply(ee.Image(new_image).select('band_1'))
   band_2_increase = _band_2.gt(ee.Image(new_image).select('band_2')).Or(cloud_mask.eq(ee.Image(0))) #This was added to not reset w/cloud
   band_2 = _band_2.multiply(band_2_increase)
-  band_6 = ee.Image(new_image).select('band_6').add(gt_thresh_mag).multiply(ee.Image(new_image).select('band_8'))
 
   # flag_change = where band 2 of status is at consecutive threshold (5)
   # 1 if consec is reached
   # 0 if not consec
   flag_change = band_2.eq(ee.Image(consec))
-  flag_mag = band_6.eq(ee.Image(mag_window)) # 1 if reaches threshold
   
   # Change status
   # 1 = no change
   # 0 = change
   band_1 = ee.Image(new_image).select('band_1').eq(ee.Image(1)).And(flag_change.eq(ee.Image(0)))
-  band_8 = ee.Image(new_image).select('band_8').eq(ee.Image(1)).And(flag_mag.eq(ee.Image(0)))
 
   # add date of image to band 3 of status where change has been flagged
   # time is stored in milliseconds since 01-01-1970, so scale to be days since then 
@@ -237,24 +222,19 @@ def monitor_func(image, new_image):
 
   # Magnitude
   magnitude = norm_res.abs().multiply(gt_thresh).multiply(zero_mask_nc)
-  magnitude_long = norm_res.abs().multiply(band_8).multiply(mag_mask_nc)
 
   #Keep mag if already changed or in process
- # is_changing = ee.Image(new_image).select('band_1').eq(ee.Image(0)).Or(ee.Image(new_image).select('band_2').gt(ee.Image(0)))
   is_changing = band_1.eq(ee.Image(0)).Or(band_2).gt(ee.Image(0));
 
- # mag_changing = ee.Image(new_image).select('band_8').eq(ee.Image(0)).Or(ee.Image(new_image).select('band_6').gt(ee.Image(0)))
-  mag_changing = band_8.eq(ee.Image(0)).Or(band_6).gt(ee.Image(0));
 
   band_4 = ee.Image(new_image).select('band_4').add(magnitude).multiply(is_changing)
-  band_7 = ee.Image(new_image).select('band_7').add(magnitude_long).multiply(mag_changing)
 
   # Add one to iteration band
   band_5 = ee.Image(new_image).select('band_5').add(ee.Image(1))
   
-  new_image = band_1.addBands([band_2,band_3,band_4,band_5, band_6, band_7, band_8])
+  new_image = band_1.addBands([band_2,band_3,band_4,band_5])
   
-  return new_image.rename(['band_1','band_2','band_3','band_4','band_5', 'band_6', 'band_7','band_8'])
+  return new_image.rename(['band_1','band_2','band_3','band_4','band_5'])
 
 def mask_57(img):
   mask = img.select(['cfmask']).neq(4).And(img.select(['cfmask']).neq(2))
@@ -424,7 +404,7 @@ def deg_monitoring(year, ts_status, path, row, old_coefs, train_nfdi, first, tme
   else:
     #Check if it is in the middle of a change - if so use last year's tmean
 
-    is_changing_mag = ee.Image(ts_status).select("band_2").gt(ee.Image(0)).Or(ee.Image(ts_status).select('band_1').eq(ee.Image(0))).Or(ee.Image(ts_status).select('band_6').gt(ee.Image(0)))
+    is_changing_mag = ee.Image(ts_status).select("band_2").gt(ee.Image(0)).Or(ee.Image(ts_status).select('band_1').eq(ee.Image(0)))
 
     not_changing_mag = ee.Image(is_changing_mag).eq(ee.Image(0))
 
@@ -494,7 +474,7 @@ change_dates = ""
     # 6. Consecutive observations passed threshold w/o resetting
     # 7. long-term change magnitude
     
-ts_status = ee.Image(1).addBands([ee.Image(0),ee.Image(0),ee.Image(0),ee.Image(1), ee.Image(0), ee.Image(0), ee.Image(1)]).rename(['band_1','band_2','band_3','band_4','band_5','band_6','band_7','band_8']).unmask()
+ts_status = ee.Image(1).addBands([ee.Image(0),ee.Image(0),ee.Image(0),ee.Image(1), ee.Image(0), ee.Image(0), ee.Image(1)]).rename(['band_1','band_2','band_3','band_4','band_5']).unmask()
 
 # Do the monitoring for each year.
 
@@ -566,21 +546,15 @@ change_dates = final_results.select('band_3')
 # st_magnitude = short-term change magnitude
 st_magnitude = final_results.select('band_4').divide(ee.Image(consec)).multiply(change_dates.gt(ee.Image(0)))
 
-# lt_magnitude = long-term change magnitude
-done_lt = final_results.select('band_6').eq(ee.Image(0)).And(final_results.select('band_8').eq(ee.Image(0)))
-not_done_lt = final_results.select('band_1').eq(ee.Image(0)).And(final_results.select('band_6').neq(ee.Image(0)))
-lt_normalizer = ee.Image(mag_window).multiply(done_lt).add(not_done_lt.multiply(final_results.select("band_6")))
-lt_magnitude = final_results.select('band_7').divide(lt_normalizer).multiply(change_dates.gt(ee.Image(0)))
-
 # save_output:
 # Bands:
     # 1. Change date
     # 2. Short-term change magnitude
-    # 3. Long-term change magnitude
 # Mask:
     # Hansen 2000 forest mask according to % canopy cover threshold (forest_threshold)
 
-save_output = change_dates.addBands([st_magnitude, lt_magnitude]).multiply(forest2000.gt(ee.Image(forest_threshold)))
+save_output = change_dates.addBands(st_magnitude).multiply(forest2000.gt(ee.Image(forest_threshold)))
+
 print('Submitting task')
 task_config = {
   'description': output,
