@@ -76,14 +76,6 @@ print(output)
 
 #GLOBALS
 global AOI
-#AOI = ee.Geometry.Polygon([[[-63.30322265625, -8.359616573543152],
-#          [-63.303565979003906, -8.382713786521965],
-#          [-63.27232360839844, -8.382713786521965],
-#          [-63.271636962890625, -8.359276898428382]]])
-#AOI = ee.Geometry.Polygon([[[-63.60813617706299, -9.22496290321107],
-#          [-63.608694076538086, -9.23131689085848],
-#          [-63.59813690185547, -9.230384979834833],
-#          [-63.59787940979004, -9.224920542909311]]])
 
 AOI = ee.Geometry.Polygon(
         [[[-63.18941116333008, -9.415532407445827],
@@ -102,21 +94,7 @@ if aoi:
     forest2000 = ee.Image('UMD/hansen/global_forest_change_2015_v1_3').select('treecover2000').clip(AOI)
 else:
     forest2000 = ee.Image('UMD/hansen/global_forest_change_2015_v1_3').select('treecover2000')
-  
-# subsets
-# Scanline issue
-#AOI = ee.Geometry.Polygon(
-#        [[[-64.171142578125, -9.248514442730311],
-#          [-62.86376953125, -9.454480416742802],
-#          [-62.5506591796875, -8.091861780114707],
-#          [-63.8690185546875, -7.896029593273104]]])
 
-#Magniude issue
-#var AOI = ee.Geometry.Polygon(
-#        [[[-63.101348876953125, -8.632618594282514],
-#          [-63.10169219970703, -8.647383653020881],
-#          [-63.08126449584961, -8.646365391673935],
-#          [-63.08006286621094, -8.632109444017052]]])
 # ** FUNCTIONS **
 
 # Collection map functions
@@ -239,10 +217,6 @@ def monitor_func(image, new_image):
   band_2_increase = _band_2.gt(ee.Image(new_image).select('band_2')).Or(cloud_mask.eq(ee.Image(0))) #This was added to not reset w/cloud
   band_2 = _band_2.multiply(band_2_increase)
   band_6 = ee.Image(new_image).select('band_6').add(gt_thresh_mag).multiply(ee.Image(new_image).select('band_8'))
-
-  #Old
-  #band_2 = ee.Image(new_image).select('band_2').add(gt_thresh).multiply(ee.Image(new_image).select('band_1')).multiply(gt_thresh)
-  #band_6 = ee.Image(new_image).select('band_6').add(gt_thresh_mag).multiply(ee.Image(new_image).select('band_8'))
 
   # flag_change = where band 2 of status is at consecutive threshold (5)
   # 1 if consec is reached
