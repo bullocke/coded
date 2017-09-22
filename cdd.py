@@ -73,11 +73,19 @@ print(output)
 #GLOBALS
 global AOI
 
+# An area with consistent LC change:
+#AOI = ee.Geometry.Polygon(
+#        [[[-63.18941116333008, -9.415532407445827],
+#          [-63.18941116333008, -9.427555957905986],
+#          [-63.16263198852539, -9.426878585912847],
+#          [-63.1629753112793, -9.414008265523616]]])
+
+# An area with non-permanent but pretty large magnitude change
 AOI = ee.Geometry.Polygon(
-        [[[-63.18941116333008, -9.415532407445827],
-          [-63.18941116333008, -9.427555957905986],
-          [-63.16263198852539, -9.426878585912847],
-          [-63.1629753112793, -9.414008265523616]]])
+        [[[-63.01474571228027, -8.54520443620746],
+          [-63.01534652709961, -8.566083821771855],
+          [-62.98470497131348, -8.566253568181075],
+          [-62.98453330993652, -8.543591753138992]]]);
 
 # spectral endmembers from Souza (2005).
 gv= [500, 900, 400, 6100, 3000, 1000]
@@ -515,7 +523,7 @@ def mask_nochange(image):
 
 def mask_beforechange(image):
   # mask retrain stack before change
-  im_date = ee.Image(image).metadata('system:time_start').divide(ee.Image(31557600000))
+  im_date = ee.Image(image).metadata('system:time_start').divide(ee.Image(315576e5))
   skip_year = change_dates.add(ee.Image(1))
   af_change = im_date.gt(skip_year)
   return ee.Image(image).updateMask(af_change).clip(AOI)
@@ -664,9 +672,10 @@ st_magnitude = final_results.select('band_4').divide(ee.Image(consec)).multiply(
 # Mask:
     # Hansen 2000 forest mask according to % canopy cover threshold (forest_threshold)
 
-save_output = change_dates.addBands([st_magnitude, retrain_coefs.select(['Intercept','Slope']), retrain_predict_last]).multiply(forest2000.gt(ee.Image(forest_threshold)))
+save_output = change_dates.addBands([st_magnitude, retrain_coefs.select(['Intercept','Slope']), retrain_predict_last.select('Predict_NFDI')]).multiply(forest2000.gt(ee.Image(forest_threshold))).toFloat()
 
 print('Submitting task')
+
 task_config = {
   'description': output,
   'scale': 30
