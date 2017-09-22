@@ -159,7 +159,8 @@ def get_mean_residuals_norm(image):
   return image.addBands(res)
 
 def add_changedate_mask(image):
-  image_date = image.metadata('system:time_start').divide(ee.Image(8.64e7))
+#  image_date = image.metadata('system:time_start').divide(ee.Image(8.64e7))
+  image_date = image.metadata('system:time_start').divide(ee.Image(315576e5))
   eq_change = image_date.eq(ee.Image(change_dates))
   new_band = ee.Image(1).multiply(image.select('NFDI')).updateMask(eq_change).rename('Change')
   return image.addBands(new_band)
@@ -217,14 +218,15 @@ def monitor_func(image, new_image):
 
   # add date of image to band 3 of status where change has been flagged
   # time is stored in milliseconds since 01-01-1970, so scale to be days since then 
-  change_date = image.metadata('system:time_start').multiply(flag_change).divide(ee.Image(8.64e7))
+  #change_date = image.metadata('system:time_start').multiply(flag_change).divide(ee.Image(8.64e7))
+  change_date = image.metadata('system:time_start').multiply(flag_change).divide(ee.Image(315576e5))
   band_3 = ee.Image(new_image).select('band_3').add(change_date)
 
   # Magnitude
   magnitude = norm_res.abs().multiply(gt_thresh).multiply(zero_mask_nc)
 
   #Keep mag if already changed or in process
-  is_changing = band_1.eq(ee.Image(0)).Or(band_2).gt(ee.Image(0));
+  is_changing = band_1.eq(ee.Image(0)).Or(band_2).gt(ee.Image(0))
 
 
   band_4 = ee.Image(new_image).select('band_4').add(magnitude).multiply(is_changing)
@@ -331,6 +333,54 @@ def get_inputs_monitoring(year, path, row):
   nfdi = ee.ImageCollection(col_unmix.map(get_nfdi)).sort('system:time_start')
 
   return nfdi
+
+def get_inputs_retrain(year, path, row):
+
+  # Get inputs for monitoring period
+
+  monitor_start = str(year) + '-01-01'
+  year_end = year + 1
+  monitor_end = str(year_end) + '-12-31'
+  
+  collection8 = ee.ImageCollection('LANDSAT/LC8_SR'
+    # Filter to get only two years of data.
+    ).filterDate(monitor_start, monitor_end
+    ).filter(ee.Filter.eq('WRS_PATH', path)
+    ).filter(ee.Filter.eq('WRS_ROW', row))
+  
+  collection7 = ee.ImageCollection('LANDSAT/LE7_SR'
+    # Filter to get only two years of data.
+    ).filterDate(monitor_start, monitor_end
+    ).filter(ee.Filter.eq('WRS_PATH', path)
+    ).filter(ee.Filter.eq('WRS_ROW', row))
+  
+  collection5 = ee.ImageCollection('LANDSAT/LT5_SR'
+    # Filter to get only two years of data.
+    ).filterDate(monitor_start, monitor_end
+    ).filter(ee.Filter.eq('WRS_PATH', path)
+    ).filter(ee.Filter.eq('WRS_ROW', row))
+  
+  
+  # Mask clouds
+  col8_noclouds = collection8.map(mask_8) 
+
+  col7_noclouds = collection7.map(mask_57)
+                   
+  col5_noclouds = collection5.map(mask_57)
+  
+  # merge
+  col_l87noclouds = col8_noclouds.merge(col7_noclouds)
+  col_noclouds = col_l87noclouds.merge(col5_noclouds)
+
+  # Training collection unmixed
+
+  col_unmix = col_noclouds.map(unmix)
+
+  # Collection NFDI
+  nfdi = ee.ImageCollection(col_unmix.map(get_nfdi)).sort('system:time_start')
+
+  return nfdi
+
 
 def get_regression_coefs(train_array):
   # Get regression coefficients for the training period
@@ -456,6 +506,51 @@ def deg_monitoring(year, ts_status, path, row, old_coefs, train_nfdi, first, tme
   return ee.List([results, coefficientsImage, new_training, _train_nfdi_mean])
 
 
+# Retraining
+
+def mask_nochange(image):
+  # mask retrain stack if there has been no change
+  ischanged = ee.Image(change_dates).gt(ee.Image(0))
+  return ee.Image(image).updateMask(ischanged).clip(AOI)
+
+def mask_beforechange(image):
+  # mask retrain stack before change
+  im_date = ee.Image(image).metadata('system:time_start').divide(ee.Image(31557600000))
+  skip_year = change_dates.add(ee.Image(1))
+  af_change = im_date.gt(skip_year)
+  return ee.Image(image).updateMask(af_change).clip(AOI)
+
+def regression_retrain(original_collection, year, path, row):
+  # get a few more years data
+  y1_data = get_inputs_retrain(year, path, row)
+  
+  full_data_nomask = original_collection.merge(y1_data).sort('system:time_start')
+
+  stack_nochange_masked = full_data_nomask.map(mask_nochange)
+  
+  stack_masked= stack_nochange_masked.map(mask_beforechange)
+  
+  #run regression on data after a change
+  train_variables = ee.ImageCollection(stack_nochange_masked).map(makeVariables)
+  
+  train_array = train_variables.toArray()
+
+  # coefficients image = image with regression coefficients (intercept, slope, sin, cos) for each pixel
+  _coefficientsImage = get_regression_coefs(train_array)
+  
+  coefficientsImage = _coefficientsImage 
+  
+  retrain_with_coefs = ee.ImageCollection(train_variables).map(addcoefs)
+  
+  retrain_predict1 = ee.ImageCollection(retrain_with_coefs).map(predict_nfdi)
+  
+  retrain_predict2 = ee.ImageCollection(retrain_predict1).map(mask_nochange)
+  
+  retrain_predict = ee.ImageCollection(retrain_predict1).map(mask_beforechange)
+  
+  return ee.List([_coefficientsImage.rename(['Intercept', 'Slope','Sin','Cos']), retrain_predict])
+
+
 # ** MAIN WORK **
 
 # ** DEFINE GLOBALS
@@ -471,10 +566,8 @@ change_dates = ""
     # 3. Date of change if 1 = 1. Default: 0
     # 4. Magnitude of change
     # 5. iterator 
-    # 6. Consecutive observations passed threshold w/o resetting
-    # 7. long-term change magnitude
     
-ts_status = ee.Image(1).addBands([ee.Image(0),ee.Image(0),ee.Image(0),ee.Image(1), ee.Image(0), ee.Image(0), ee.Image(1)]).rename(['band_1','band_2','band_3','band_4','band_5']).unmask()
+ts_status = ee.Image(1).addBands([ee.Image(0),ee.Image(0),ee.Image(0),ee.Image(1)]).rename(['band_1','band_2','band_3','band_4','band_5']).unmask()
 
 # Do the monitoring for each year.
 
@@ -536,11 +629,26 @@ tmean = results.get(3)
 results = deg_monitoring(2010, ts_status, path, row, old_coefs, train_nfdi, False, tmean)
 
 final_results = ee.Image(results.get(0))
-
+final_train = ee.ImageCollection(results.get(2))
 change_output = final_results.select('band_1').eq(ee.Image(0))
 
 global change_dates
 change_dates = final_results.select('band_3')
+
+
+# Retrain
+
+retrain_regression = regression_retrain(final_train, 2011, path, row);
+
+retrain_coefs = ee.Image(retrain_regression.get(0));
+retrain_predict = ee.ImageCollection(retrain_regression.get(1));
+retrain_predict_last = ee.Image(retrain_predict.toList(1000).get(-1))
+
+
+
+
+
+# Prepare output
 
 # Normalize magnitude
 # st_magnitude = short-term change magnitude
@@ -550,10 +658,13 @@ st_magnitude = final_results.select('band_4').divide(ee.Image(consec)).multiply(
 # Bands:
     # 1. Change date
     # 2. Short-term change magnitude
+    # 3. Regression constant (intercept) TODO: Normalize to middle of time period
+    # 4. Regression slope
+    # 5. Predicted NFDI: End of time period
 # Mask:
     # Hansen 2000 forest mask according to % canopy cover threshold (forest_threshold)
 
-save_output = change_dates.addBands(st_magnitude).multiply(forest2000.gt(ee.Image(forest_threshold)))
+save_output = change_dates.addBands([st_magnitude, retrain_coefs.select(['Intercept','Slope']), retrain_predict_last]).multiply(forest2000.gt(ee.Image(forest_threshold)))
 
 print('Submitting task')
 task_config = {
