@@ -5,6 +5,7 @@
 
 Usage: GE_cdd.py [options] <output>
 
+  --cloud=CLOUD     cloud threshold
   --path=PATH       path
   --row=ROW         row
   --consec=CONSEC   consecutive obs to trigger change (default: 5)
@@ -12,6 +13,8 @@ Usage: GE_cdd.py [options] <output>
   --thresh=THRESH   change threshold (default: 3.5)
   --forest=FOREST   forest % cover threshold (default: 30)
   --aoi             Use an area of interest (must hard code)
+  --cf=CF_THRESH    Cloud frqction threshold
+
 """
 
 from docopt import docopt
@@ -63,6 +66,17 @@ if args['--forest']:
 else:
     forest_threshold = 30
 
+if args['--cloud']:
+    cloud_score = int(args['--cloud'])
+else:
+    cloud_score = 30
+
+if args['--cf']:
+    cf_thresh = float(args['--cf'])
+else:
+    cf_thresh = .2
+
+
 aoi = False
 if args['--aoi']:
     aoi = True
@@ -81,17 +95,44 @@ global AOI
 #          [-63.1629753112793, -9.414008265523616]]])
 
 # An area with non-permanent but pretty large magnitude change
+#AOI = ee.Geometry.Polygon(
+#        [[[-63.01474571228027, -8.54520443620746],
+#          [-63.01534652709961, -8.566083821771855],
+#          [-62.98470497131348, -8.566253568181075],
+#          [-62.98453330993652, -8.543591753138992]]])
+#A negative slope area after change
+#AOI = ee.Geometry.Polygon(
+#        [[[-63.67778778076172, -9.182261141381252],
+#          [-63.678131103515625, -9.203697392579707],
+#          [-63.64663124084473, -9.203612666870026],
+#          [-63.64800453186035, -9.180651251959972]]])
+
+#229 072: False positives from clouds
+#AOI = ee.Geometry.Polygon(
+#        [[[-60.330047607421875, -17.14079039331664],
+#          [-60.330047607421875, -17.195898563721066],
+#          [-60.236663818359375, -17.190650872324778],
+#          [-60.2435302734375, -17.1211049385472]]])
+#Same as above but smaller
+
 AOI = ee.Geometry.Polygon(
-        [[[-63.01474571228027, -8.54520443620746],
-          [-63.01534652709961, -8.566083821771855],
-          [-62.98470497131348, -8.566253568181075],
-          [-62.98453330993652, -8.543591753138992]]]);
+        [[[-60.329017639160156, -17.14079039331664],
+          [-60.32764434814453, -17.149976225210278],
+          [-60.28095245361328, -17.14571143119116],
+          [-60.281639099121094, -17.133900721294882]]])
 
 # spectral endmembers from Souza (2005).
-gv= [500, 900, 400, 6100, 3000, 1000]
-shade= [0, 0, 0, 0, 0, 0]
-npv= [1400, 1500, 1300, 3000, 7800, 2000]
-soil= [2000, 3000, 3400, 5800, 7900, 7000]
+#gv= [500, 900, 400, 6100, 3000, 1000]
+#shade= [0, 0, 0, 0, 0, 0]
+#npv= [1400, 1500, 1300, 3000, 7800, 2000]
+#soil= [2000, 3000, 3400, 5800, 7900, 7000]
+
+# Add cloud fraction
+var gv= [500, 900, 400, 6100, 3000, 1000];
+var npv= [1400, 1700, 2200, 3000, 5500, 3000];
+var soil= [2000, 3000, 3400, 5800, 6000, 5800];
+var shade= [0, 0, 0, 0, 0, 0];
+var cloud = [6000, 6000, 6000, 6000, 6000, 6000]
 
 # Hansen forest cover
 if aoi:
@@ -104,9 +145,10 @@ else:
 # Collection map functions
 
 def unmix(image):
-  unmixi = ee.Image(image).unmix([gv, shade, npv, soil], True, True)
+  unmixi = ee.Image(image).unmix([gv, shade, npv, soil, cloud], True, True)
   newimage = ee.Image(image).addBands(unmixi)
-  return newimage
+  mask = ee.Image(newimage).select('band_4').lt(cf_thresh)
+  return newimage.updateMask(mask)
 
 # NFDI functions
 def get_nfdi(image):
@@ -152,6 +194,18 @@ def predict_nfdi(image):
       'cos': ee.Image(image).select('cos')
     })
   return ee.Image(image).addBands(ee.Image(pred_nfdi_first).rename(['Predict_NFDI']))
+
+#Prediction function for retrain period - remove seasonaility
+def pred_middle_retrain(retrain_middle, retrain_coefs):
+  # Predict NFDI at middle of retraining period
+  image = ee.Image(retrain_middle).addBands(retrain_coefs)
+  pred_nfdi_imd = ee.Image(image).expression(
+    'constant + (coef_trend * t)', {
+      't': ee.Image(image).select('years'),
+      'coef_trend': ee.Image(image).select('Slope'),
+      'constant': ee.Image(image).select('Intercept')
+    })
+  return pred_nfdi_imd
 
 # Add standard deviation band
 def addmean(image):
@@ -247,14 +301,14 @@ def monitor_func(image, new_image):
   return new_image.rename(['band_1','band_2','band_3','band_4','band_5'])
 
 def mask_57(img):
-  mask = img.select(['cfmask']).neq(4).And(img.select(['cfmask']).neq(2))
+  mask = img.select(['cfmask']).neq(4).And(img.select(['cfmask']).neq(2)).And(img.select('B1').gt(ee.Image(0)))
   if aoi:
     return img.updateMask(mask).select(['B1','B2', 'B3','B4','B5','B7']).clip(AOI)
   else:
     return img.updateMask(mask).select(['B1','B2', 'B3','B4','B5','B7'])
 
 def mask_8(img):
-  mask = img.select(['cfmask']).neq(4).And(img.select(['cfmask']).neq(2))
+  mask = img.select(['cfmask']).neq(4).And(img.select(['cfmask']).neq(2)).And(img.select('B2').gt(ee.Image(0)))
   if aoi:
     return ee.Image(img.updateMask(mask).select(['B2', 'B3','B4','B5','B6','B7']).rename(['B1','B2','B3','B4','B5','B7'])).clip(AOI)
   else:
@@ -281,9 +335,9 @@ def get_inputs_training(_year, path, row):
   
   # Mask clouds
                    
-  train_col7_noclouds = train_collection7.map(mask_57)
+  train_col7_noclouds = train_collection7.map(mask_57).map(add_cloudscore7)
                    
-  train_col5_noclouds = train_collection5.map(mask_57)
+  train_col5_noclouds = train_collection5.map(mask_57).map(add_cloudscore5)
   
   train_col_noclouds = train_col7_noclouds.merge(train_col5_noclouds)
 
@@ -323,11 +377,11 @@ def get_inputs_monitoring(year, path, row):
   
   
   # Mask clouds
-  col8_noclouds = collection8.map(mask_8) 
+  col8_noclouds = collection8.map(mask_8).map(add_cloudscore8)
 
-  col7_noclouds = collection7.map(mask_57)
+  col7_noclouds = collection7.map(mask_57).map(add_cloudscore7)
                    
-  col5_noclouds = collection5.map(mask_57)
+  col5_noclouds = collection5.map(mask_57).map(add_cloudscore5)
   
   # merge
   col_l87noclouds = col8_noclouds.merge(col7_noclouds)
@@ -370,11 +424,11 @@ def get_inputs_retrain(year, path, row):
   
   
   # Mask clouds
-  col8_noclouds = collection8.map(mask_8) 
+  col8_noclouds = collection8.map(mask_8).map(add_cloudscore8) 
 
-  col7_noclouds = collection7.map(mask_57)
+  col7_noclouds = collection7.map(mask_57).map(add_cloudscore7)
                    
-  col5_noclouds = collection5.map(mask_57)
+  col5_noclouds = collection5.map(mask_57).map(add_cloudscore5)
   
   # merge
   col_l87noclouds = col8_noclouds.merge(col7_noclouds)
@@ -393,7 +447,7 @@ def get_inputs_retrain(year, path, row):
 def get_regression_coefs(train_array):
   # Get regression coefficients for the training period
   
-  # Define the axes of variation in the collection array.
+  # Define the axes of iation in the collection array.
   imageAxis = 0
   bandAxis = 1
 
@@ -425,7 +479,7 @@ def deg_monitoring(year, ts_status, path, row, old_coefs, train_nfdi, first, tme
   # train array = nfdi collection as arrays
   train_array = ee.ImageCollection(train_nfdi).map(makeVariables).toArray()
 
-  # train_all = train array with temporal variables attached
+  # train_all = train array with temporal iables attached
   train_all = ee.ImageCollection(train_nfdi).map(makeVariables)
 
   # coefficients image = image with regression coefficients (intercept, slope, sin, cos) for each pixel
@@ -519,14 +573,20 @@ def deg_monitoring(year, ts_status, path, row, old_coefs, train_nfdi, first, tme
 def mask_nochange(image):
   # mask retrain stack if there has been no change
   ischanged = ee.Image(change_dates).gt(ee.Image(0))
-  return ee.Image(image).updateMask(ischanged).clip(AOI)
+  if aoi:
+      return ee.Image(image).updateMask(ischanged).clip(AOI)
+  else:
+      return ee.Image(image).updateMask(ischanged)
 
 def mask_beforechange(image):
   # mask retrain stack before change
   im_date = ee.Image(image).metadata('system:time_start').divide(ee.Image(315576e5))
   skip_year = change_dates.add(ee.Image(1))
   af_change = im_date.gt(skip_year)
-  return ee.Image(image).updateMask(af_change).clip(AOI)
+  if aoi:
+      return ee.Image(image).updateMask(af_change).clip(AOI)
+  else:
+      return ee.Image(image).updateMask(af_change)
 
 def regression_retrain(original_collection, year, path, row):
   # get a few more years data
@@ -539,16 +599,16 @@ def regression_retrain(original_collection, year, path, row):
   stack_masked= stack_nochange_masked.map(mask_beforechange)
   
   #run regression on data after a change
-  train_variables = ee.ImageCollection(stack_nochange_masked).map(makeVariables)
+  train_iables = ee.ImageCollection(stack_nochange_masked).map(makeVariables)
   
-  train_array = train_variables.toArray()
+  train_array = train_iables.toArray()
 
   # coefficients image = image with regression coefficients (intercept, slope, sin, cos) for each pixel
   _coefficientsImage = get_regression_coefs(train_array)
   
   coefficientsImage = _coefficientsImage 
   
-  retrain_with_coefs = ee.ImageCollection(train_variables).map(addcoefs)
+  retrain_with_coefs = ee.ImageCollection(train_iables).map(addcoefs)
   
   retrain_predict1 = ee.ImageCollection(retrain_with_coefs).map(predict_nfdi)
   
@@ -558,6 +618,66 @@ def regression_retrain(original_collection, year, path, row):
   
   return ee.List([_coefficientsImage.rename(['Intercept', 'Slope','Sin','Cos']), retrain_predict])
 
+
+def add_cloudscore5(image):
+   thedate = image.date()
+   date_bef = thedate.advance(-1, 'day')
+   date_aft = thedate.advance(1,'day')
+   toa = ee.ImageCollection('LANDSAT/LT05/C01/T1_TOA'
+      ).filterDate(date_bef, date_aft
+      ).filter(ee.Filter.eq('WRS_PATH', path)
+      ).filter(ee.Filter.eq('WRS_ROW', row)
+      ).first()
+   cs = ee.Algorithms.If(
+    ee.Image(toa),
+    ee.Image(ee.Algorithms.Landsat.simpleCloudScore(ee.Image(toa))).select('cloud'),
+    ee.Image(0).rename(['cloud']))
+
+   mask = ee.Image(cs).lt(ee.Image(cloud_score))
+   if aoi:
+     return image.updateMask(mask).select(['B1','B2', 'B3','B4','B5','B7']).clip(AOI)
+   else:
+     return image.updateMask(mask).select(['B1','B2', 'B3','B4','B5','B7'])
+
+def add_cloudscore7(image):
+   thedate = image.date()
+   date_bef = thedate.advance(-1, 'day')
+   date_aft = thedate.advance(1,'day')
+   toa = ee.ImageCollection('LANDSAT/LE07/C01/T1_TOA'
+      ).filterDate(date_bef, date_aft
+      ).filter(ee.Filter.eq('WRS_PATH', path)
+      ).filter(ee.Filter.eq('WRS_ROW', row)
+      ).first()
+   cs = ee.Algorithms.If(
+    ee.Image(toa),
+    ee.Image(ee.Algorithms.Landsat.simpleCloudScore(ee.Image(toa))).select('cloud'),
+    ee.Image(0).rename(['cloud']))
+
+   mask = ee.Image(cs).lt(ee.Image(cloud_score))
+   if aoi:
+     return image.updateMask(mask).select(['B1','B2', 'B3','B4','B5','B7']).clip(AOI)
+   else:
+     return image.updateMask(mask).select(['B1','B2', 'B3','B4','B5','B7'])
+
+def add_cloudscore8(image):
+   thedate = image.date()
+   date_bef = thedate.advance(-1, 'day')
+   date_aft = thedate.advance(1,'day')
+   toa = ee.ImageCollection('LANDSAT/LC08/C01/T1_TOA'
+      ).filterDate(date_bef, date_aft
+      ).filter(ee.Filter.eq('WRS_PATH', path)
+      ).filter(ee.Filter.eq('WRS_ROW', row)
+      ).first()
+   cs = ee.Algorithms.If(
+    ee.Image(toa),
+    ee.Image(ee.Algorithms.Landsat.simpleCloudScore(ee.Image(toa))).select('cloud'),
+    ee.Image(0).rename(['cloud']))
+     
+   mask = ee.Image(cs).lt(ee.Image(cloud_score))
+   if aoi:
+     return image.updateMask(mask).select(['B1','B2', 'B3','B4','B5','B7']).clip(AOI)
+   else:
+     return image.updateMask(mask).select(['B1','B2', 'B3','B4','B5','B7'])
 
 # ** MAIN WORK **
 
@@ -646,12 +766,20 @@ change_dates = final_results.select('band_3')
 
 # Retrain
 
-retrain_regression = regression_retrain(final_train, 2011, path, row);
+retrain_regression = regression_retrain(final_train, 2011, path, row)
 
-retrain_coefs = ee.Image(retrain_regression.get(0));
-retrain_predict = ee.ImageCollection(retrain_regression.get(1));
+retrain_coefs = ee.Image(retrain_regression.get(0))
+retrain_predict = ee.ImageCollection(retrain_regression.get(1))
 retrain_predict_last = ee.Image(retrain_predict.toList(1000).get(-1))
 
+# Get predicted NFDI at middle of time series
+retrain_last = ee.Image(retrain_predict.toList(1000).get(-1))
+
+retrain_last_date = ee.Image(retrain_last).metadata('system:time_start').divide(ee.Image(31557600000))
+
+# get the date at the middle of the retrain time series
+retrain_middle = ee.Image(ee.Image(retrain_last_date).subtract(ee.Image(change_dates)).divide(ee.Image(2)).add(ee.Image(change_dates))).rename(['years'])
+predict_middle = pred_middle_retrain(retrain_middle, retrain_coefs)
 
 
 
@@ -672,7 +800,7 @@ st_magnitude = final_results.select('band_4').divide(ee.Image(consec)).multiply(
 # Mask:
     # Hansen 2000 forest mask according to % canopy cover threshold (forest_threshold)
 
-save_output = change_dates.addBands([st_magnitude, retrain_coefs.select(['Intercept','Slope']), retrain_predict_last.select('Predict_NFDI')]).multiply(forest2000.gt(ee.Image(forest_threshold))).toFloat()
+save_output = change_dates.addBands([st_magnitude, retrain_coefs.select('Slope'), predict_middle]).multiply(forest2000.gt(ee.Image(forest_threshold))).toFloat()
 
 print('Submitting task')
 
