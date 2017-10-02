@@ -87,6 +87,13 @@ print(output)
 #GLOBALS
 global AOI
 
+# Good LC change 230 064
+AOI = ee.Geometry.Polygon(
+        [[[-60.0897216796875, -5.713696585527914],
+          [-60.062255859375, -5.966436597410203],
+          [-59.72785949707031, -5.95687555121208],
+          [-59.74159240722656, -5.711646879515093]]])
+
 # An area with consistent LC change:
 #AOI = ee.Geometry.Polygon(
 #        [[[-63.18941116333008, -9.415532407445827],
@@ -115,11 +122,11 @@ global AOI
 #          [-60.2435302734375, -17.1211049385472]]])
 #Same as above but smaller
 
-AOI = ee.Geometry.Polygon(
-        [[[-60.329017639160156, -17.14079039331664],
-          [-60.32764434814453, -17.149976225210278],
-          [-60.28095245361328, -17.14571143119116],
-          [-60.281639099121094, -17.133900721294882]]])
+#AOI = ee.Geometry.Polygon(
+#        [[[-60.329017639160156, -17.14079039331664],
+#          [-60.32764434814453, -17.149976225210278],
+#          [-60.28095245361328, -17.14571143119116],
+#          [-60.281639099121094, -17.133900721294882]]])
 
 # spectral endmembers from Souza (2005).
 #gv= [500, 900, 400, 6100, 3000, 1000]
@@ -128,11 +135,21 @@ AOI = ee.Geometry.Polygon(
 #soil= [2000, 3000, 3400, 5800, 7900, 7000]
 
 # Add cloud fraction
-var gv= [500, 900, 400, 6100, 3000, 1000];
-var npv= [1400, 1700, 2200, 3000, 5500, 3000];
-var soil= [2000, 3000, 3400, 5800, 6000, 5800];
-var shade= [0, 0, 0, 0, 0, 0];
-var cloud = [6000, 6000, 6000, 6000, 6000, 6000]
+#gv= [500, 900, 400, 6100, 3000, 1000]
+#npv= [1400, 1700, 2200, 3000, 5500, 3000]
+#soil= [2000, 3000, 3400, 5800, 6000, 5800]
+#shade= [0, 0, 0, 0, 0, 0]
+#cloud = [6000, 6000, 6000, 6000, 6000, 6000]
+
+#Try 2
+gv= [500, 900, 400, 6100, 3000, 1000]
+npv= [1400, 1700, 2200, 3000, 5500, 3000]
+soil= [2000, 3000, 3400, 5800, 6000, 5800]
+shade= [0, 0, 0, 0, 0, 0]
+#cloud = [6000, 5500, 5000, 4500, 4200, 4000]
+cloud = [9000, 9600, 8000, 7800, 7200, 6500];
+
+
 
 # Hansen forest cover
 if aoi:
@@ -205,7 +222,10 @@ def pred_middle_retrain(retrain_middle, retrain_coefs):
       'coef_trend': ee.Image(image).select('Slope'),
       'constant': ee.Image(image).select('Intercept')
     })
-  return pred_nfdi_imd
+  if aoi:
+      return pred_nfdi_imd.clip(AOI)
+  else:
+      return pred_nfdi_imd
 
 # Add standard deviation band
 def addmean(image):
@@ -710,6 +730,7 @@ results = deg_monitoring(2003, ts_status, path, row, old_coefs, train_nfdi, True
 ts_status = results.get(0)
 old_coefs = results.get(1)
 train_nfdi = results.get(2)
+original_coefs = old_coefs
 tmean = results.get(3)
 
 results = deg_monitoring(2004, ts_status, path, row, old_coefs, train_nfdi, False, tmean)
@@ -775,7 +796,10 @@ retrain_predict_last = ee.Image(retrain_predict.toList(1000).get(-1))
 # Get predicted NFDI at middle of time series
 retrain_last = ee.Image(retrain_predict.toList(1000).get(-1))
 
-retrain_last_date = ee.Image(retrain_last).metadata('system:time_start').divide(ee.Image(31557600000))
+if aoi:
+  retrain_last_date = ee.Image(retrain_last).metadata('system:time_start').divide(ee.Image(31557600000)).clip(AOI)
+else:
+  retrain_last_date = ee.Image(retrain_last).metadata('system:time_start').divide(ee.Image(31557600000))
 
 # get the date at the middle of the retrain time series
 retrain_middle = ee.Image(ee.Image(retrain_last_date).subtract(ee.Image(change_dates)).divide(ee.Image(2)).add(ee.Image(change_dates))).rename(['years'])
@@ -797,9 +821,11 @@ st_magnitude = final_results.select('band_4').divide(ee.Image(consec)).multiply(
     # 3. Regression constant (intercept) TODO: Normalize to middle of time period
     # 4. Regression slope
     # 5. Predicted NFDI: End of time period
+    # 6-9: Original training coefficients
 # Mask:
     # Hansen 2000 forest mask according to % canopy cover threshold (forest_threshold)
 
+#save_output = change_dates.addBands([st_magnitude, retrain_coefs.select('Slope'), predict_middle, original_coefs]).multiply(forest2000.gt(ee.Image(forest_threshold))).toFloat()
 save_output = change_dates.addBands([st_magnitude, retrain_coefs.select('Slope'), predict_middle]).multiply(forest2000.gt(ee.Image(forest_threshold))).toFloat()
 
 print('Submitting task')
