@@ -38,16 +38,15 @@ print('Earth Engine Initialized')
 if __name__ == '__main__':
     args = docopt(__doc__, version='0.6.2')
 
+pathrow = False
 if args['--path']:
     path = int(args['--path'])
-else:
-    print('need to supply path')
-    sys.exit()
+    pathrow = True
 
 if args['--row']:
     row = int(args['--row'])
-else:
-    print('need to supply row')
+elif pathrow:
+    print('need to supply row with path')
     sys.exit()
 
 if args['--consec']:
@@ -80,6 +79,9 @@ else:
 aoi = False
 if args['--aoi']:
     aoi = True
+elif not pathrow:
+    print('with no Path Row, need to specify AOI')
+    sys.exit()
 
 output=str(args['<output>'])
 print(output)
@@ -87,12 +89,26 @@ print(output)
 #GLOBALS
 global AOI
 
-# Good LC change 230 064
+# Corner of: 225068, 224068, 224067, 225067
 AOI = ee.Geometry.Polygon(
-        [[[-60.0897216796875, -5.713696585527914],
-          [-60.062255859375, -5.966436597410203],
-          [-59.72785949707031, -5.95687555121208],
-          [-59.74159240722656, -5.711646879515093]]])
+        [[[-52.6080322265625, -10.466205555063855],
+          [-52.701416015625, -11.189179572173773],
+          [-51.8499755859375, -11.264612212504426],
+          [-51.778564453125, -10.531020008464976]]])
+
+# Good LC change 230 064
+#AOI = ee.Geometry.Polygon(
+#        [[[-60.0897216796875, -5.713696585527914],
+#          [-60.062255859375, -5.966436597410203],
+#          [-59.72785949707031, -5.95687555121208],
+#          [-59.74159240722656, -5.711646879515093]]])
+
+# Weird timing in 225 068
+#AOI  = ee.Geometry.Polygon(
+#        [[[-52.49422073364258, -11.332703493375984],
+#          [-52.484307289123535, -11.373054028251476],
+#          [-52.43250846862793, -11.36270396602446],
+#          [-52.43491172790527, -11.319700907625505]]]);
 
 # An area with consistent LC change:
 #AOI = ee.Geometry.Polygon(
@@ -341,18 +357,25 @@ def get_inputs_training(_year, path, row):
   train_year_start = str(_year - 6) 
   train_start = train_year_start + '-01-01'
   train_end = str(year) + '-12-31'
+
+  if pathrow:  
+    train_collection7 = ee.ImageCollection('LANDSAT/LE7_SR'
+      ).filterDate(train_start, train_end
+      ).filter(ee.Filter.eq('WRS_PATH', path)
+      ).filter(ee.Filter.eq('WRS_ROW', row))
   
-  train_collection7 = ee.ImageCollection('LANDSAT/LE7_SR'
-    ).filterDate(train_start, train_end
-    ).filter(ee.Filter.eq('WRS_PATH', path)
-    ).filter(ee.Filter.eq('WRS_ROW', row))
+    train_collection5 = ee.ImageCollection('LANDSAT/LT5_SR'
+      # Filter to get only two years of data.
+      ).filterDate(train_start, train_end
+      ).filter(ee.Filter.eq('WRS_PATH', path)
+      ).filter(ee.Filter.eq('WRS_ROW', row))
+  else:
+    train_collection7 = ee.ImageCollection('LANDSAT/LE7_SR'
+      ).filterDate(train_start, train_end)
   
-  train_collection5 = ee.ImageCollection('LANDSAT/LT5_SR'
-    # Filter to get only two years of data.
-    ).filterDate(train_start, train_end
-    ).filter(ee.Filter.eq('WRS_PATH', path)
-    ).filter(ee.Filter.eq('WRS_ROW', row))
-  
+    train_collection5 = ee.ImageCollection('LANDSAT/LT5_SR'
+      # Filter to get only two years of data.
+      ).filterDate(train_start, train_end)
   # Mask clouds
                    
   train_col7_noclouds = train_collection7.map(mask_57).map(add_cloudscore7)
@@ -375,26 +398,38 @@ def get_inputs_monitoring(year, path, row):
   # Get inputs for monitoring period
 
   monitor_start = str(year) + '-01-01'
-  monitor_end = str(year) + '-12-31'
+  monitor_end = str(year + 1) + '-12-31'
   
-  collection8 = ee.ImageCollection('LANDSAT/LC8_SR'
-    # Filter to get only two years of data.
-    ).filterDate(monitor_start, monitor_end
-    ).filter(ee.Filter.eq('WRS_PATH', path)
-    ).filter(ee.Filter.eq('WRS_ROW', row))
+  if pathrow: 
+    collection8 = ee.ImageCollection('LANDSAT/LC8_SR'
+      # Filter to get only two years of data.
+      ).filterDate(monitor_start, monitor_end
+      ).filter(ee.Filter.eq('WRS_PATH', path)
+      ).filter(ee.Filter.eq('WRS_ROW', row))
   
-  collection7 = ee.ImageCollection('LANDSAT/LE7_SR'
-    # Filter to get only two years of data.
-    ).filterDate(monitor_start, monitor_end
-    ).filter(ee.Filter.eq('WRS_PATH', path)
-    ).filter(ee.Filter.eq('WRS_ROW', row))
+    collection7 = ee.ImageCollection('LANDSAT/LE7_SR'
+      # Filter to get only two years of data.
+      ).filterDate(monitor_start, monitor_end
+      ).filter(ee.Filter.eq('WRS_PATH', path)
+      ).filter(ee.Filter.eq('WRS_ROW', row))
   
-  collection5 = ee.ImageCollection('LANDSAT/LT5_SR'
-    # Filter to get only two years of data.
-    ).filterDate(monitor_start, monitor_end
-    ).filter(ee.Filter.eq('WRS_PATH', path)
-    ).filter(ee.Filter.eq('WRS_ROW', row))
+    collection5 = ee.ImageCollection('LANDSAT/LT5_SR'
+      # Filter to get only two years of data.
+      ).filterDate(monitor_start, monitor_end
+      ).filter(ee.Filter.eq('WRS_PATH', path)
+      ).filter(ee.Filter.eq('WRS_ROW', row))
+  else:
+    collection8 = ee.ImageCollection('LANDSAT/LC8_SR'
+      # Filter to get only two years of data.
+      ).filterDate(monitor_start, monitor_end)
   
+    collection7 = ee.ImageCollection('LANDSAT/LE7_SR'
+      # Filter to get only two years of data.
+      ).filterDate(monitor_start, monitor_end)
+  
+    collection5 = ee.ImageCollection('LANDSAT/LT5_SR'
+      # Filter to get only two years of data.
+      ).filterDate(monitor_start, monitor_end)
   
   # Mask clouds
   col8_noclouds = collection8.map(mask_8).map(add_cloudscore8)
@@ -424,25 +459,37 @@ def get_inputs_retrain(year, path, row):
   year_end = year + 1
   monitor_end = str(year_end) + '-12-31'
   
-  collection8 = ee.ImageCollection('LANDSAT/LC8_SR'
-    # Filter to get only two years of data.
-    ).filterDate(monitor_start, monitor_end
-    ).filter(ee.Filter.eq('WRS_PATH', path)
-    ).filter(ee.Filter.eq('WRS_ROW', row))
+  if pathrow: 
+    collection8 = ee.ImageCollection('LANDSAT/LC8_SR'
+      # Filter to get only two years of data.
+      ).filterDate(monitor_start, monitor_end
+      ).filter(ee.Filter.eq('WRS_PATH', path)
+      ).filter(ee.Filter.eq('WRS_ROW', row))
   
-  collection7 = ee.ImageCollection('LANDSAT/LE7_SR'
-    # Filter to get only two years of data.
-    ).filterDate(monitor_start, monitor_end
-    ).filter(ee.Filter.eq('WRS_PATH', path)
-    ).filter(ee.Filter.eq('WRS_ROW', row))
+    collection7 = ee.ImageCollection('LANDSAT/LE7_SR'
+      # Filter to get only two years of data.
+      ).filterDate(monitor_start, monitor_end
+      ).filter(ee.Filter.eq('WRS_PATH', path)
+      ).filter(ee.Filter.eq('WRS_ROW', row))
   
-  collection5 = ee.ImageCollection('LANDSAT/LT5_SR'
-    # Filter to get only two years of data.
-    ).filterDate(monitor_start, monitor_end
-    ).filter(ee.Filter.eq('WRS_PATH', path)
-    ).filter(ee.Filter.eq('WRS_ROW', row))
+    collection5 = ee.ImageCollection('LANDSAT/LT5_SR'
+      # Filter to get only two years of data.
+      ).filterDate(monitor_start, monitor_end
+      ).filter(ee.Filter.eq('WRS_PATH', path)
+      ).filter(ee.Filter.eq('WRS_ROW', row))
+  else:
+    collection8 = ee.ImageCollection('LANDSAT/LC8_SR'
+      # Filter to get only two years of data.
+      ).filterDate(monitor_start, monitor_end)
   
+    collection7 = ee.ImageCollection('LANDSAT/LE7_SR'
+      # Filter to get only two years of data.
+      ).filterDate(monitor_start, monitor_end)
   
+    collection5 = ee.ImageCollection('LANDSAT/LT5_SR'
+      # Filter to get only two years of data.
+      ).filterDate(monitor_start, monitor_end)
+
   # Mask clouds
   col8_noclouds = collection8.map(mask_8).map(add_cloudscore8) 
 
@@ -515,8 +562,6 @@ def deg_monitoring(year, ts_status, path, row, old_coefs, train_nfdi, first, tme
 
   global coefficientsImage
   coefficientsImage = old_changing_coefs.add(current_coefs_nochange)
-
-  train_intercept = coefficientsImage.select('coef_constant')
 
   #Get Tmean = mean NFDI residuals
   # If not in the middle of a change - use tmean for current training period
@@ -723,9 +768,17 @@ old_coefs = ee.Image(0)
 
 # First year inputs
 
-train_nfdi = get_inputs_training(2003, path, row)
+train_nfdi = get_inputs_training(2000, path, row)
 
-results = deg_monitoring(2003, ts_status, path, row, old_coefs, train_nfdi, True, None)
+results = deg_monitoring(2000, ts_status, path, row, old_coefs, train_nfdi, True, None)
+
+ts_status = results.get(0)
+old_coefs = results.get(1)
+train_nfdi = results.get(2)
+original_coefs = old_coefs
+tmean = results.get(3)
+
+results = deg_monitoring(2002, ts_status, path, row, old_coefs, train_nfdi, True, None)
 
 ts_status = results.get(0)
 old_coefs = results.get(1)
@@ -740,13 +793,6 @@ old_coefs = results.get(1)
 train_nfdi = results.get(2)
 tmean = results.get(3)
 
-results = deg_monitoring(2005, ts_status, path, row, old_coefs, train_nfdi, False, tmean)
-
-ts_status = results.get(0)
-old_coefs = results.get(1)
-train_nfdi = results.get(2)
-tmean = results.get(3)
-
 results = deg_monitoring(2006, ts_status, path, row, old_coefs, train_nfdi, False, tmean)
 
 ts_status = results.get(0)
@@ -754,28 +800,7 @@ old_coefs = results.get(1)
 train_nfdi = results.get(2)
 tmean = results.get(3)
 
-results = deg_monitoring(2007, ts_status, path, row, old_coefs, train_nfdi, False, tmean)
-
-ts_status = results.get(0)
-old_coefs = results.get(1)
-train_nfdi = results.get(2)
-tmean = results.get(3)
-
 results = deg_monitoring(2008, ts_status, path, row, old_coefs, train_nfdi, False, tmean)
-
-ts_status = results.get(0)
-old_coefs = results.get(1)
-train_nfdi = results.get(2)
-tmean = results.get(3)
-
-results = deg_monitoring(2009, ts_status, path, row, old_coefs, train_nfdi, False, tmean)
-
-ts_status = results.get(0)
-old_coefs = results.get(1)
-train_nfdi = results.get(2)
-tmean = results.get(3)
-
-results = deg_monitoring(2010, ts_status, path, row, old_coefs, train_nfdi, False, tmean)
 
 final_results = ee.Image(results.get(0))
 final_train = ee.ImageCollection(results.get(2))
@@ -825,8 +850,11 @@ st_magnitude = final_results.select('band_4').divide(ee.Image(consec)).multiply(
 # Mask:
     # Hansen 2000 forest mask according to % canopy cover threshold (forest_threshold)
 
-#save_output = change_dates.addBands([st_magnitude, retrain_coefs.select('Slope'), predict_middle, original_coefs]).multiply(forest2000.gt(ee.Image(forest_threshold))).toFloat()
-save_output = change_dates.addBands([st_magnitude, retrain_coefs.select('Slope'), predict_middle]).multiply(forest2000.gt(ee.Image(forest_threshold))).toFloat()
+#Convert original coefficients to an image to save
+save_original_coefs = ee.Image(original_coefs)
+
+save_output = change_dates.addBands([st_magnitude, retrain_coefs.select('Slope'), predict_middle, save_original_coefs]).multiply(forest2000.gt(ee.Image(forest_threshold))).toFloat()
+#save_output = change_dates.addBands([st_magnitude, retrain_coefs.select('Slope'), predict_middle]).multiply(forest2000.gt(ee.Image(forest_threshold))).toFloat()
 
 print('Submitting task')
 
