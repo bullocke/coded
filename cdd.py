@@ -38,6 +38,8 @@ print('Earth Engine Initialized')
 if __name__ == '__main__':
     args = docopt(__doc__, version='0.6.2')
 
+path = None
+row = None
 pathrow = False
 if args['--path']:
     path = int(args['--path'])
@@ -79,9 +81,6 @@ else:
 aoi = False
 if args['--aoi']:
     aoi = True
-elif not pathrow:
-    print('with no Path Row, need to specify AOI')
-    sys.exit()
 
 output=str(args['<output>'])
 print(output)
@@ -89,60 +88,12 @@ print(output)
 #GLOBALS
 global AOI
 
-# Corner of: 225068, 224068, 224067, 225067
+# Good roads in 225 68
 AOI = ee.Geometry.Polygon(
-        [[[-52.6080322265625, -10.466205555063855],
-          [-52.701416015625, -11.189179572173773],
-          [-51.8499755859375, -11.264612212504426],
-          [-51.778564453125, -10.531020008464976]]])
-
-# Good LC change 230 064
-#AOI = ee.Geometry.Polygon(
-#        [[[-60.0897216796875, -5.713696585527914],
-#          [-60.062255859375, -5.966436597410203],
-#          [-59.72785949707031, -5.95687555121208],
-#          [-59.74159240722656, -5.711646879515093]]])
-
-# Weird timing in 225 068
-#AOI  = ee.Geometry.Polygon(
-#        [[[-52.49422073364258, -11.332703493375984],
-#          [-52.484307289123535, -11.373054028251476],
-#          [-52.43250846862793, -11.36270396602446],
-#          [-52.43491172790527, -11.319700907625505]]]);
-
-# An area with consistent LC change:
-#AOI = ee.Geometry.Polygon(
-#        [[[-63.18941116333008, -9.415532407445827],
-#          [-63.18941116333008, -9.427555957905986],
-#          [-63.16263198852539, -9.426878585912847],
-#          [-63.1629753112793, -9.414008265523616]]])
-
-# An area with non-permanent but pretty large magnitude change
-#AOI = ee.Geometry.Polygon(
-#        [[[-63.01474571228027, -8.54520443620746],
-#          [-63.01534652709961, -8.566083821771855],
-#          [-62.98470497131348, -8.566253568181075],
-#          [-62.98453330993652, -8.543591753138992]]])
-#A negative slope area after change
-#AOI = ee.Geometry.Polygon(
-#        [[[-63.67778778076172, -9.182261141381252],
-#          [-63.678131103515625, -9.203697392579707],
-#          [-63.64663124084473, -9.203612666870026],
-#          [-63.64800453186035, -9.180651251959972]]])
-
-#229 072: False positives from clouds
-#AOI = ee.Geometry.Polygon(
-#        [[[-60.330047607421875, -17.14079039331664],
-#          [-60.330047607421875, -17.195898563721066],
-#          [-60.236663818359375, -17.190650872324778],
-#          [-60.2435302734375, -17.1211049385472]]])
-#Same as above but smaller
-
-#AOI = ee.Geometry.Polygon(
-#        [[[-60.329017639160156, -17.14079039331664],
-#          [-60.32764434814453, -17.149976225210278],
-#          [-60.28095245361328, -17.14571143119116],
-#          [-60.281639099121094, -17.133900721294882]]])
+        [[[-53.778076171875, -10.692996347925074],
+          [-53.81927490234375, -11.183790773046617],
+          [-53.35784912109375, -11.108337084308145],
+          [-53.3441162109375, -10.763159330300516]]])
 
 # spectral endmembers from Souza (2005).
 #gv= [500, 900, 400, 6100, 3000, 1000]
@@ -163,7 +114,7 @@ npv= [1400, 1700, 2200, 3000, 5500, 3000]
 soil= [2000, 3000, 3400, 5800, 6000, 5800]
 shade= [0, 0, 0, 0, 0, 0]
 #cloud = [6000, 5500, 5000, 4500, 4200, 4000]
-cloud = [9000, 9600, 8000, 7800, 7200, 6500];
+cloud = [9000, 9600, 8000, 7800, 7200, 6500]
 
 
 
@@ -248,9 +199,17 @@ def addmean(image):
   newimage = ee.Image(image).addBands(ee.Image(train_nfdi_mean))
   return newimage
 
+#def get_mean_residuals(image):
+#  res = image.select('NFDI').subtract(image.select('Predict_NFDI')).abs()
+#  return res
+
 def get_mean_residuals(image):
-  res = image.select('NFDI').subtract(image.select('Predict_NFDI')).abs()
-  return res
+  res = ee.Image(image).select('NFDI').subtract(image.select('Predict_NFDI'))
+  
+  sq_res = ee.Image(res).multiply(ee.Image(res)).rename(['sq_res'])
+
+  full_image = ee.Image(image).addBands(ee.Image(sq_res))
+  return full_image.select('sq_res')
 
 def get_mean_residuals_norm(image):
   res = image.select('NFDI').subtract(image.select('Predict_NFDI')).divide(ee.Image(train_nfdi_mean)).rename(['res'])
@@ -371,11 +330,13 @@ def get_inputs_training(_year, path, row):
       ).filter(ee.Filter.eq('WRS_ROW', row))
   else:
     train_collection7 = ee.ImageCollection('LANDSAT/LE7_SR'
-      ).filterDate(train_start, train_end)
-  
+      ).filterDate(train_start, train_end
+      ).filterBounds(AOI)
+ 
     train_collection5 = ee.ImageCollection('LANDSAT/LT5_SR'
       # Filter to get only two years of data.
-      ).filterDate(train_start, train_end)
+      ).filterDate(train_start, train_end
+      ).filterBounds(AOI)
   # Mask clouds
                    
   train_col7_noclouds = train_collection7.map(mask_57).map(add_cloudscore7)
@@ -421,15 +382,18 @@ def get_inputs_monitoring(year, path, row):
   else:
     collection8 = ee.ImageCollection('LANDSAT/LC8_SR'
       # Filter to get only two years of data.
-      ).filterDate(monitor_start, monitor_end)
+      ).filterDate(monitor_start, monitor_end
+      ).filterBounds(AOI)
   
     collection7 = ee.ImageCollection('LANDSAT/LE7_SR'
       # Filter to get only two years of data.
-      ).filterDate(monitor_start, monitor_end)
+      ).filterDate(monitor_start, monitor_end
+      ).filterBounds(AOI)
   
     collection5 = ee.ImageCollection('LANDSAT/LT5_SR'
       # Filter to get only two years of data.
-      ).filterDate(monitor_start, monitor_end)
+      ).filterDate(monitor_start, monitor_end
+      ).filterBounds(AOI)
   
   # Mask clouds
   col8_noclouds = collection8.map(mask_8).map(add_cloudscore8)
@@ -480,15 +444,18 @@ def get_inputs_retrain(year, path, row):
   else:
     collection8 = ee.ImageCollection('LANDSAT/LC8_SR'
       # Filter to get only two years of data.
-      ).filterDate(monitor_start, monitor_end)
+      ).filterDate(monitor_start, monitor_end
+      ).filterBounds(AOI)
   
     collection7 = ee.ImageCollection('LANDSAT/LE7_SR'
       # Filter to get only two years of data.
-      ).filterDate(monitor_start, monitor_end)
+      ).filterDate(monitor_start, monitor_end
+      ).filterBounds(AOI)
   
     collection5 = ee.ImageCollection('LANDSAT/LT5_SR'
       # Filter to get only two years of data.
-      ).filterDate(monitor_start, monitor_end)
+      ).filterDate(monitor_start, monitor_end
+      ).filterBounds(AOI)
 
   # Mask clouds
   col8_noclouds = collection8.map(mask_8).map(add_cloudscore8) 
@@ -575,7 +542,10 @@ def deg_monitoring(year, ts_status, path, row, old_coefs, train_nfdi, first, tme
     # train_nfdi_mean = mean normalized residuals for the training period
     #Current year tmean = mean abs() residuals
     global train_nfdi_mean
-    train_nfdi_mean = predict_nfdi_train.map(get_mean_residuals).mean().rename(['mean_res'])
+#    train_nfdi_mean = predict_nfdi_train.map(get_mean_residuals).mean().rename(['mean_res'])
+#    _train_nfdi_mean = train_nfdi_mean
+    train_nfdi_sq_res = predict_nfdi_train.map(get_mean_residuals).mean()
+    train_nfdi_mean = ee.Image(train_nfdi_sq_res).sqrt().rename(['mean_res'])
     _train_nfdi_mean = train_nfdi_mean
 
   else:
@@ -592,7 +562,9 @@ def deg_monitoring(year, ts_status, path, row, old_coefs, train_nfdi, first, tme
 
     # train_nfdi_mean = mean normalized residuals for the training period
     #Current year tmean = mean abs() residuals
-    _train_nfdi_mean = predict_nfdi_train.map(get_mean_residuals).mean().rename(['mean_res'])
+    #_train_nfdi_mean = predict_nfdi_train.map(get_mean_residuals).mean().rename(['mean_res'])
+    _train_nfdi_sq_res = predict_nfdi_train.map(get_mean_residuals).mean()
+    _train_nfdi_mean = ee.Image(_train_nfdi_sq_res).sqrt().rename(['mean_res'])
 
     old_changing_tmean = ee.Image(is_changing_mag).multiply(ee.Image(tmean))
     current_tmean_nochange = ee.Image(not_changing_mag).multiply(ee.Image(_train_nfdi_mean))
@@ -802,6 +774,27 @@ tmean = results.get(3)
 
 results = deg_monitoring(2008, ts_status, path, row, old_coefs, train_nfdi, False, tmean)
 
+ts_status = results.get(0)
+old_coefs = results.get(1)
+train_nfdi = results.get(2)
+tmean = results.get(3)
+
+results = deg_monitoring(2010, ts_status, path, row, old_coefs, train_nfdi, False, tmean)
+
+ts_status = results.get(0)
+old_coefs = results.get(1)
+train_nfdi = results.get(2)
+tmean = results.get(3)
+
+results = deg_monitoring(2012, ts_status, path, row, old_coefs, train_nfdi, False, tmean)
+
+ts_status = results.get(0)
+old_coefs = results.get(1)
+train_nfdi = results.get(2)
+tmean = results.get(3)
+
+results = deg_monitoring(2014, ts_status, path, row, old_coefs, train_nfdi, False, tmean)
+
 final_results = ee.Image(results.get(0))
 final_train = ee.ImageCollection(results.get(2))
 change_output = final_results.select('band_1').eq(ee.Image(0))
@@ -831,6 +824,10 @@ retrain_middle = ee.Image(ee.Image(retrain_last_date).subtract(ee.Image(change_d
 predict_middle = pred_middle_retrain(retrain_middle, retrain_coefs)
 
 
+# Get coefficients for middle of TS before
+original_middle = ee.Image(ee.Image(change_dates).add(ee.Image(1970)).divide(ee.Image(2))).rename(['years'])
+predict_middle_original = pred_middle_retrain(original_middle, ee.Image(original_coefs).rename(['Intercept', 'Slope','Sin','Cos']))
+
 
 
 # Prepare output
@@ -846,14 +843,12 @@ st_magnitude = final_results.select('band_4').divide(ee.Image(consec)).multiply(
     # 3. Regression constant (intercept) TODO: Normalize to middle of time period
     # 4. Regression slope
     # 5. Predicted NFDI: End of time period
-    # 6-9: Original training coefficients
+    # 6. Pre-Change intercept normalized to middle of training period
 # Mask:
     # Hansen 2000 forest mask according to % canopy cover threshold (forest_threshold)
 
-#Convert original coefficients to an image to save
-save_original_coefs = ee.Image(original_coefs)
 
-save_output = change_dates.addBands([st_magnitude, retrain_coefs.select('Slope'), predict_middle, save_original_coefs]).multiply(forest2000.gt(ee.Image(forest_threshold))).toFloat()
+save_output = change_dates.addBands([st_magnitude, retrain_coefs.select('Slope'), predict_middle, predict_middle_original]).multiply(forest2000.gt(ee.Image(forest_threshold))).toFloat()
 #save_output = change_dates.addBands([st_magnitude, retrain_coefs.select('Slope'), predict_middle]).multiply(forest2000.gt(ee.Image(forest_threshold))).toFloat()
 
 print('Submitting task')
