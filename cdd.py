@@ -9,11 +9,12 @@ Usage: GE_cdd.py [options] <output>
   --path=PATH       path
   --row=ROW         row
   --consec=CONSEC   consecutive obs to trigger change (default: 5)
-  --mag=MAG         size of long-term magnitude window (default: 10)
   --thresh=THRESH   change threshold (default: 3.5)
   --forest=FOREST   forest % cover threshold (default: 30)
   --aoi             Use an area of interest (must hard code)
   --cf=CF_THRESH    Cloud frqction threshold
+  --rmse=RMSE       RMSE threshold for forest classification
+  --mag=MAG         Magnitude threshold for forest classification
 
 """
 
@@ -77,6 +78,16 @@ if args['--cf']:
 else:
     cf_thresh = .2
 
+if args['--rmse']:
+    rmse_thresh = float(args['--rmse'])
+else:
+    rmse_thresh = .3
+
+if args['--mag']:
+    mag_thresh = float(args['--mag'])
+else:
+    mag_thresh = .6
+
 
 aoi = False
 if args['--aoi']:
@@ -88,12 +99,13 @@ print(output)
 #GLOBALS
 global AOI
 
-# Good roads in 225 68
+
+#Missed change 299 69
 AOI = ee.Geometry.Polygon(
-        [[[-53.778076171875, -10.692996347925074],
-          [-53.81927490234375, -11.183790773046617],
-          [-53.35784912109375, -11.108337084308145],
-          [-53.3441162109375, -10.763159330300516]]])
+        [[[-60.01581072807312, -12.736319129682075],
+          [-60.0158429145813, -12.74218984418972],
+          [-60.00924468040466, -12.742252631845096],
+          [-60.00914812088013, -12.736224945988106]]])
 
 # spectral endmembers from Souza (2005).
 #gv= [500, 900, 400, 6100, 3000, 1000]
@@ -280,7 +292,7 @@ def monitor_func(image, new_image):
   band_3 = ee.Image(new_image).select('band_3').add(change_date)
 
   # Magnitude
-  magnitude = norm_res.abs().multiply(gt_thresh).multiply(zero_mask_nc)
+  magnitude = ee.Image(norm_dif).abs().multiply(gt_thresh).multiply(zero_mask_nc)
 
   #Keep mag if already changed or in process
   is_changing = band_1.eq(ee.Image(0)).Or(band_2).gt(ee.Image(0))
@@ -359,7 +371,8 @@ def get_inputs_monitoring(year, path, row):
   # Get inputs for monitoring period
 
   monitor_start = str(year) + '-01-01'
-  monitor_end = str(year + 1) + '-12-31'
+  #monitor_end = str(year + 1) + '-12-31'
+  monitor_end = str(year) + '-12-31'
   
   if pathrow: 
     collection8 = ee.ImageCollection('LANDSAT/LC8_SR'
@@ -749,23 +762,51 @@ old_coefs = results.get(1)
 train_nfdi = results.get(2)
 original_coefs = old_coefs
 tmean = results.get(3)
+otmean = ee.Image(tmean)
+
+results = deg_monitoring(2001, ts_status, path, row, old_coefs, train_nfdi, True, None)
+
+ts_status = results.get(0)
+old_coefs = results.get(1)
+train_nfdi = results.get(2)
+tmean = results.get(3)
 
 results = deg_monitoring(2002, ts_status, path, row, old_coefs, train_nfdi, True, None)
 
 ts_status = results.get(0)
 old_coefs = results.get(1)
 train_nfdi = results.get(2)
-original_coefs = old_coefs
 tmean = results.get(3)
 
-results = deg_monitoring(2004, ts_status, path, row, old_coefs, train_nfdi, False, tmean)
+results = deg_monitoring(2003, ts_status, path, row, old_coefs, train_nfdi, True, None)
 
 ts_status = results.get(0)
 old_coefs = results.get(1)
 train_nfdi = results.get(2)
 tmean = results.get(3)
 
-results = deg_monitoring(2006, ts_status, path, row, old_coefs, train_nfdi, False, tmean)
+results = deg_monitoring(2004, ts_status, path, row, old_coefs, train_nfdi, True, None)
+
+ts_status = results.get(0)
+old_coefs = results.get(1)
+train_nfdi = results.get(2)
+tmean = results.get(3)
+
+results = deg_monitoring(2005, ts_status, path, row, old_coefs, train_nfdi, True, None)
+
+ts_status = results.get(0)
+old_coefs = results.get(1)
+train_nfdi = results.get(2)
+tmean = results.get(3)
+
+results = deg_monitoring(2006, ts_status, path, row, old_coefs, train_nfdi, True, None)
+
+ts_status = results.get(0)
+old_coefs = results.get(1)
+train_nfdi = results.get(2)
+tmean = results.get(3)
+
+results = deg_monitoring(2007, ts_status, path, row, old_coefs, train_nfdi, True, None)
 
 ts_status = results.get(0)
 old_coefs = results.get(1)
@@ -779,7 +820,21 @@ old_coefs = results.get(1)
 train_nfdi = results.get(2)
 tmean = results.get(3)
 
+results = deg_monitoring(2009, ts_status, path, row, old_coefs, train_nfdi, False, tmean)
+
+ts_status = results.get(0)
+old_coefs = results.get(1)
+train_nfdi = results.get(2)
+tmean = results.get(3)
+
 results = deg_monitoring(2010, ts_status, path, row, old_coefs, train_nfdi, False, tmean)
+
+ts_status = results.get(0)
+old_coefs = results.get(1)
+train_nfdi = results.get(2)
+tmean = results.get(3)
+
+results = deg_monitoring(2011, ts_status, path, row, old_coefs, train_nfdi, False, tmean)
 
 ts_status = results.get(0)
 old_coefs = results.get(1)
@@ -793,7 +848,21 @@ old_coefs = results.get(1)
 train_nfdi = results.get(2)
 tmean = results.get(3)
 
+results = deg_monitoring(2013, ts_status, path, row, old_coefs, train_nfdi, False, tmean)
+
+ts_status = results.get(0)
+old_coefs = results.get(1)
+train_nfdi = results.get(2)
+tmean = results.get(3)
+
 results = deg_monitoring(2014, ts_status, path, row, old_coefs, train_nfdi, False, tmean)
+
+ts_status = results.get(0)
+old_coefs = results.get(1)
+train_nfdi = results.get(2)
+tmean = results.get(3)
+
+results = deg_monitoring(2015, ts_status, path, row, old_coefs, train_nfdi, False, tmean)
 
 final_results = ee.Image(results.get(0))
 final_train = ee.ImageCollection(results.get(2))
@@ -824,10 +893,10 @@ retrain_middle = ee.Image(ee.Image(retrain_last_date).subtract(ee.Image(change_d
 predict_middle = pred_middle_retrain(retrain_middle, retrain_coefs)
 
 
-# Get coefficients for middle of TS before
-original_middle = ee.Image(ee.Image(change_dates).add(ee.Image(1970)).divide(ee.Image(2))).rename(['years'])
+# Get prediction for year 2000
+original_middle = ee.Image(30).rename(['years'])
 predict_middle_original = pred_middle_retrain(original_middle, ee.Image(original_coefs).rename(['Intercept', 'Slope','Sin','Cos']))
-
+predict_middle_original = ee.Image(predict_middle_original)
 
 
 # Prepare output
@@ -835,6 +904,10 @@ predict_middle_original = pred_middle_retrain(original_middle, ee.Image(original
 # Normalize magnitude
 # st_magnitude = short-term change magnitude
 st_magnitude = final_results.select('band_4').divide(ee.Image(consec)).multiply(change_dates.gt(ee.Image(0)))
+
+#Forest mask
+forest_mask = predict_middle_original.gt(ee.Image(mag_thresh)).And(otmean.lt(ee.Image(rmse_thresh))).multiply(forest2000.gt(ee.Image(forest_threshold)))
+
 
 # save_output:
 # Bands:
@@ -844,12 +917,13 @@ st_magnitude = final_results.select('band_4').divide(ee.Image(consec)).multiply(
     # 4. Regression slope
     # 5. Predicted NFDI: End of time period
     # 6. Pre-Change intercept normalized to middle of training period
+    # 7. Original training RMSE
 # Mask:
     # Hansen 2000 forest mask according to % canopy cover threshold (forest_threshold)
 
 
-save_output = change_dates.addBands([st_magnitude, retrain_coefs.select('Slope'), predict_middle, predict_middle_original]).multiply(forest2000.gt(ee.Image(forest_threshold))).toFloat()
-#save_output = change_dates.addBands([st_magnitude, retrain_coefs.select('Slope'), predict_middle]).multiply(forest2000.gt(ee.Image(forest_threshold))).toFloat()
+#save_output = change_dates.addBands([st_magnitude, retrain_coefs.select('Slope'), predict_middle, predict_middle_original, otmean]).multiply(forest2000.gt(ee.Image(forest_threshold))).toFloat()
+save_output = change_dates.addBands([st_magnitude, retrain_coefs.select('Slope'), predict_middle, predict_middle_original, otmean]).updateMask(forest_mask).toFloat()
 
 print('Submitting task')
 
