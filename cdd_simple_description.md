@@ -8,7 +8,7 @@ All available Landsat data is used a converted to surface reflectance using the 
   * CFmask product
   * Google Earth Engine simple cloud score
 
-The data are then converted to spectral endmembers using endmembers developed in [Souza et al., 2005](http://www.sciencedirect.com/science/article/pii/S0034425705002385), in addition to a self-developed cloud endmember. The 5 endmembers are:
+The data are then converted through linear spectral unmixing to represent fractions of spectral endmembers developed in [Souza et al., 2005](http://www.sciencedirect.com/science/article/pii/S0034425705002385), in addition to a self-developed cloud endmember. The 5 endmembers are:
 
   * Green Vegetation
   * Non-Photosynthetic Vegetation
@@ -29,10 +29,17 @@ To find degraded or damaged forests, the original state of the forest must first
 
 These regression components are used to differentiate a forest or forested grassland (including cerrado) from other land covers. The following chart shows how the land covers differ based on regression RMSE and magnitude based on 1250 training locations across the Amazon basin: 
 
-![alt text](https://raw.githubusercontent.com/bullocke/ge-cdd/master/images/NFDI_landcover_classification.jpg)( "NFDI Classificaiton")
+![alt text](https://raw.githubusercontent.com/bullocke/ge-cdd/master/images/NFDI_landcover_classification.jpg)
 
 The simple version of the algorithm (Simple-CDD), also excludes areas with high trend components to filter out actively changing landscapes (such as regrowing forests). The model is then refit over the training period without the trend term. The reason for removing the trend term is to be able to predict into the future without triggering a change when the gradual change process ends (such as the saturation, or natural halting of regrowth). The full CDD algorithm refits the model every year, accounting for these changes. However, the computational intensity of the regression makes the process significantly slower. 
 
-An important step in this process is not just forest classification, but forest characterization. 
+An important step in this process is not just forest classification, but forest characterization. By calculating the training NFDI regression magnitude, change in NFDI can then be calculated relative to original condition. In this manner, degradation is defined as its relation to original state, not just the NFDI at the current time. A good example of this distinction is in forested cerrado, which exists naturally in a state of non-continuous canopy cover. The cerrado will naturally have a lower NFDI than a closed-canopy forest, but that does not mean it is degraded. This difference alludes to the difficulty in classifying a degraded forest based on a single image alone. 
+
+To see the difference in forest characterization with canopy cover, see the difference in NFDI between a dense congruent canopy in Rondôni (top), and a thinner forested cerrado in Mato Gross (bottom):
+
+![alt text](https://raw.githubusercontent.com/bullocke/ge-cdd/master/images/DenseForest_both.jpg)
+![alt text](https://raw.githubusercontent.com/bullocke/ge-cdd/master/images/ThinForest_both.jpg)
+
+## Change detection  
 
 ## NFDI Prediction 
