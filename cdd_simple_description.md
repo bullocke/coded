@@ -37,8 +37,8 @@ An important step in this process is not just forest classification, but forest 
 
 To see the difference in forest characterization with canopy cover, see the difference in NFDI between a dense congruent canopy in Rondôni (top), and a thinner forested cerrado in Mato Gross (bottom):
 
-![alt text](https://raw.githubusercontent.com/bullocke/ge-cdd/master/images/DenseForest_both.jpg)
-![alt text](https://raw.githubusercontent.com/bullocke/ge-cdd/master/images/ThinForest_both.jpg)
+![alt text](https://raw.githubusercontent.com/bullocke/ge-cdd/master/images/DenseForest_both2.jpg)
+![alt text](https://raw.githubusercontent.com/bullocke/ge-cdd/master/images/ThinForest_both2.jpg)
 
 ## Change detection  
 
