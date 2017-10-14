@@ -35,10 +35,10 @@ The simple version of the algorithm (Simple-CDD), also excludes areas with high 
 
 An important step in this process is not just forest classification, but forest characterization. By calculating the training NFDI regression magnitude, change in NFDI can then be calculated relative to original condition. In this manner, degradation is defined as its relation to original state, not just the NFDI at the current time. A good example of this distinction is in forested cerrado, which exists naturally in a state of non-continuous canopy cover. The cerrado will naturally have a lower NFDI than a closed-canopy forest, but that does not mean it is degraded. This difference alludes to the difficulty in classifying a degraded forest based on a single image alone. 
 
-To see the difference in forest characterization with canopy cover, see the difference in NFDI between a dense congruent canopy in Rondôia (top), and a thinner forested cerrado in Mato Groso bottom, images courtesy Google Earth):
+To see the difference in forest characterization with canopy cover, see the difference in NFDI between a dense congruent canopy in Rondôia (top), and a thinner forested cerrado in Mato Groso( bottom, images courtesy Google Earth):
 
-![alt text](https://raw.githubusercontent.com/bullocke/ge-cdd/master/images/DenseForest_both2.jpg)
-![alt text](https://raw.githubusercontent.com/bullocke/ge-cdd/master/images/ThinForest_both2.jpg)
+![alt text](https://raw.githubusercontent.com/bullocke/ge-cdd/master/images/DenseForest_both3.jpg)
+![alt text](https://raw.githubusercontent.com/bullocke/ge-cdd/master/images/ThinForest_both3.jpg)
 
 ## Change detection  
 
