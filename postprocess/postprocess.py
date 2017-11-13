@@ -6,7 +6,6 @@ Usage: postprocess.py [options] <input> <output> <param>
 
 """
 
-
 import cv2, sys
 import pymeanshift as pms
 import numpy as np
@@ -14,7 +13,6 @@ import gdal
 import scipy.stats
 from docopt import docopt
 from skimage.color import rgb2gray
-#from skimage.filters import sobel
 from scipy import ndimage
 from skimage.segmentation import felzenszwalb, slic, quickshift#, watershed
 from skimage.segmentation import mark_boundaries
@@ -34,6 +32,7 @@ def main(config, input, output):
     # Classification
     print "doing classification..."
     before_array, after_array, ftf_array = do_classify(config, input)    
+    before_copy = np.copy(before_array)
 
     # Sieve
     print "doing sieve..."
@@ -45,11 +44,6 @@ def main(config, input, output):
     sieved_array = convert_date(config, sieved_array)
 
     full_array = np.copy(sieved_array)
-
-
-    #Geometry features
-    if config['postprocessing']['window']['do_window']:
-        window_array = get_geom_feats(config, array)
 
     # Get change difference
     change_dif_array = convert_change_dif(config, sieved_array)
@@ -67,9 +61,22 @@ def main(config, input, output):
     print "almost there..."
     deg_mag = get_deg_magnitude(config, ftf_array, sieved_array, change_dif_array)
 
+
     deg_mag = min_max_years(config, deg_mag)
     # Segmentation
     # TODO 
+
+    # Deg classification
+
+    # first clear up some memory
+    after_array = None
+    ftf_array = None
+
+    #Geometry features
+    # TODO
+    #deg_class = do_deg_classification(config, input, deg_mag, before_copy, full_array)
+
+    #window_array = get_geom_feats(config, deg_mag, before_copy, input)
 
     # save
     save_raster(deg_mag, input, output) 

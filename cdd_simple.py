@@ -2,7 +2,6 @@
 # -*- coding: UTF-8 -*-
 """ Simple version of CDD for faster processing
 
-
 Usage: GE_cdd.py [options] <output>
 
   --cloud=CLOUD     cloud threshold
@@ -17,6 +16,8 @@ Usage: GE_cdd.py [options] <output>
   --mag=MAG         Magnitude threshold for forest classification
   --trend=TREND     Trend (slope) threshold: default: .05
   --year=YEAR       Year to stop training and start monitoring
+  --asset           Save to EE Asset instead of drive
+  --folder=FOLDER   Folder name to save to
 
 """
 
@@ -29,9 +30,8 @@ import matplotlib.dates as mdates
 from matplotlib import dates
 from pylab import *
 
-#Import pycc and earth engine
+#Google earth engine API
 import ee
-import ccd
 
 # Initialize Earth Engine
 ee.Initialize()
@@ -44,6 +44,9 @@ if __name__ == '__main__':
 path = None
 row = None
 pathrow = False
+
+# Lots of ugly arg parsing, TODO
+
 if args['--path']:
     path = int(args['--path'])
     pathrow = True
@@ -103,6 +106,20 @@ aoi = False
 if args['--aoi']:
     aoi = True
 
+asset = False
+if args['--asset']:
+    asset = True
+
+if args['--folder']:
+    folder_name = args['--folder']
+else:
+    if asset:
+        print('Need to specify asset folder')
+        sys.exit()
+    else:
+        folder_name = None
+
+
 output=str(args['<output>'])
 print(output)
 
@@ -116,15 +133,12 @@ AOI = ee.Geometry.Polygon(
           [-63.37589979171753, -8.684463459519577],
           [-63.375492095947266, -8.677781728053864]]])
 
-
 #Try 2
 gv= [500, 900, 400, 6100, 3000, 1000]
 npv= [1400, 1700, 2200, 3000, 5500, 3000]
 soil= [2000, 3000, 3400, 5800, 6000, 5800]
 shade= [0, 0, 0, 0, 0, 0]
 cloud = [9000, 9600, 8000, 7800, 7200, 6500]
-
-
 
 # Hansen forest cover
 if aoi:
@@ -180,6 +194,30 @@ def makeVariables_gv(image):
     season.cos().rename(['cos'])).addBands(
     image.select(['band_0'])).toFloat()
 
+def makeVariables_npv(image):
+  # Compute time of the image in fractional years relative to the Epoch.
+  year = ee.Image(image.date().difference(ee.Date('1970-01-01'), 'year')) # this is the years since 1970
+  # Compute the season in radians, one cycle per year.
+  season = year.multiply(2 * np.pi)
+  # Return an image of the predictors followed by the response.
+  return image.select().addBands(ee.Image(1)).addBands(
+#    year.rename(['t'])).addBands(
+    season.sin().rename(['sin'])).addBands(
+    season.cos().rename(['cos'])).addBands(
+    image.select(['band_2'])).toFloat()
+
+def makeVariables_soil(image):
+  # Compute time of the image in fractional years relative to the Epoch.
+  year = ee.Image(image.date().difference(ee.Date('1970-01-01'), 'year')) # this is the years since 1970
+  # Compute the season in radians, one cycle per year.
+  season = year.multiply(2 * np.pi)
+  # Return an image of the predictors followed by the response.
+  return image.select().addBands(ee.Image(1)).addBands(
+#    year.rename(['t'])).addBands(
+    season.sin().rename(['sin'])).addBands(
+    season.cos().rename(['cos'])).addBands(
+    image.select(['band_3'])).toFloat()
+
 def makeVariables_shade(image):
   # Compute time of the image in fractional years relative to the Epoch.
   year = ee.Image(image.date().difference(ee.Date('1970-01-01'), 'year')) # this is the years since 1970
@@ -198,6 +236,7 @@ def makeVariables_fullem(image):
   # Compute the season in radians, one cycle per year.
   season = year.multiply(2 * np.pi)
   # Return an image of the predictors followed by the response.
+  #return image.select().addBands(ee.Image(1)).rename('constant').addBands(
   return image.select().addBands(ee.Image(1)).addBands(
 #    year.rename(['t'])).addBands(
     season.sin().rename(['sin'])).addBands(
@@ -220,11 +259,13 @@ def makeVariables_trend(image):
 
 # Add coefficients to image
 def addcoefs(image):
+  # Add regression coeffiecients to an imge
   newimage = ee.Image(image).addBands(ee.Image(coefficientsImage))
   return newimage
 
 # Prediction function
 def predict_nfdi(image):
+  # Predict NDFI based on regression coefficients
   pred_nfdi_first = ee.Image(image).expression(
     'constant + (coef_sin * sin) + (coef_cos * cos)', {
       't': ee.Image(image).select('t'),
@@ -238,6 +279,7 @@ def predict_nfdi(image):
 
 # For the regrowth test
 def predict_nfdi_trend(image):
+  # Predict NDFI with regression coefficients with trend (slope) term
   pred_nfdi_first = ee.Image(image).expression(
     'constant + (coef_trend * t) + (coef_sin * sin) + (coef_cos * cos)', {
       't': ee.Image(image).select('t'),
@@ -262,14 +304,12 @@ def pred_middle_retrain(retrain_middle, retrain_coefs):
 
 # Add standard deviation band
 def addmean(image):
+  # Add RMSE band to image
   newimage = ee.Image(image).addBands(ee.Image(train_nfdi_mean))
   return newimage
 
-#def get_mean_residuals(image):
-#  res = image.select('NFDI').subtract(image.select('Predict_NFDI')).abs()
-#  return res
-
 def get_mean_residuals(image):
+  # Return RMSE of time series residuals
   res = ee.Image(image).select('NFDI').subtract(image.select('Predict_NFDI'))
   
   sq_res = ee.Image(res).multiply(ee.Image(res)).rename(['sq_res'])
@@ -278,20 +318,21 @@ def get_mean_residuals(image):
   return full_image.select('sq_res')
 
 def get_mean_residuals_norm(image):
+  # Get normalized residuals
   res = image.select('NFDI').subtract(image.select('Predict_NFDI')).divide(ee.Image(train_nfdi_mean)).rename(['res'])
   return image.addBands(res)
 
 def add_changedate_mask(image):
-#  image_date = image.metadata('system:time_start').divide(ee.Image(8.64e7))
+  # Mask if before changedate
   image_date = image.metadata('system:time_start').divide(ee.Image(315576e5))
   eq_change = image_date.eq(ee.Image(change_dates))
   new_band = ee.Image(1).multiply(image.select('NFDI')).updateMask(eq_change).rename('Change')
   return image.addBands(new_band)
 
 def get_abs(image):
+  # Get absulte value of residuals
   abs = image.select('res').abs().rename('abs_res')
   return image.addBands(abs)
-
 
 # Main monitoring function
 # status = 4 band image with status of change detection:
@@ -349,12 +390,7 @@ def monitor_func(image, new_image):
 
   band_3 = ee.Image(new_image).select('band_3').add(change_date).multiply(ee.Image((gt_thresh.eq(1).Or(cloud_mask.eq(0)).Or(ee.Image(new_image).select('band_1').eq(0)))))
 
-  #Old: only when flag change
-#  change_date = image.metadata('system:time_start').multiply(flag_change).divide(ee.Image(315576e5))`
-#  band_3 = ee.Image(new_image).select('band_3').add(change_date)
-
   # Magnitude and endmembers
-#  magnitude = ee.Image(norm_dif).abs().multiply(gt_thresh).multiply(zero_mask_nc)
   magnitude = ee.Image(norm_dif).multiply(gt_thresh).multiply(zero_mask_nc)
   endm1 = ee.Image(image_monitor).select('band_0').multiply(gt_thresh).multiply(zero_mask_nc)
   endm2 = ee.Image(image_monitor).select('band_1').multiply(gt_thresh).multiply(zero_mask_nc)
@@ -363,7 +399,6 @@ def monitor_func(image, new_image):
 
   #Keep mag if already changed or in process
   is_changing = band_1.eq(ee.Image(0)).Or(band_2).gt(ee.Image(0))
-
 
   band_4 = ee.Image(new_image).select('band_4').add(magnitude).multiply(is_changing)
 
@@ -376,12 +411,12 @@ def monitor_func(image, new_image):
   band_8 = ee.Image(new_image).select('band_8').add(endm3).multiply(is_changing)
   band_9 = ee.Image(new_image).select('band_9').add(endm4).multiply(is_changing)
 
-
   new_image = band_1.addBands([band_2,band_3,band_4,band_5,band_6,band_7,band_8,band_9])
   
   return new_image.rename(['band_1','band_2','band_3','band_4','band_5','band_6','band_7','band_8','band_9'])
 
 def mask_57(img):
+  # Cloud mask for Landsat 5 and 7
   mask = img.select(['cfmask']).neq(4).And(img.select(['cfmask']).neq(2)).And(img.select('B1').gt(ee.Image(0)))
   if aoi:
     return img.updateMask(mask).select(['B1','B2', 'B3','B4','B5','B7']).clip(AOI)
@@ -389,6 +424,7 @@ def mask_57(img):
     return img.updateMask(mask).select(['B1','B2', 'B3','B4','B5','B7'])
 
 def mask_8(img):
+  # Cloud mask for Landsat 8
   mask = img.select(['cfmask']).neq(4).And(img.select(['cfmask']).neq(2)).And(img.select('B2').gt(ee.Image(0)))
   if aoi:
     return ee.Image(img.updateMask(mask).select(['B2', 'B3','B4','B5','B6','B7']).rename(['B1','B2','B3','B4','B5','B7'])).clip(AOI)
@@ -443,11 +479,10 @@ def get_inputs_training(_year, path, row):
   return train_nfdi
 
 def get_inputs_monitoring(year, path, row):
-
   # Get inputs for monitoring period
 
   monitor_start = str(year + 1) + '-01-01'
-  #monitor_end = str(year + 1) + '-12-31'
+  #TODO: paramterize this
   monitor_end = '2015' + '-12-31'
   
   if pathrow: 
@@ -495,8 +530,10 @@ def get_inputs_monitoring(year, path, row):
   col_l87noclouds = col8_noclouds.merge(col7_noclouds)
   col_noclouds = col_l87noclouds.merge(col5_noclouds)
 
-  # Training collection unmixed
+  # testing: don't include l8
+#  col_noclouds = col7_noclouds.merge(col5_noclouds)
 
+  # Training collection unmixed
   col_unmix = col_noclouds.map(unmix)
 
   # Collection NFDI
@@ -505,7 +542,6 @@ def get_inputs_monitoring(year, path, row):
   return nfdi
 
 def get_inputs_retrain(year, path, row):
-
   # Get inputs for monitoring period
 
   monitor_start = str(year) + '-01-01'
@@ -557,8 +593,10 @@ def get_inputs_retrain(year, path, row):
   col_l87noclouds = col8_noclouds.merge(col7_noclouds)
   col_noclouds = col_l87noclouds.merge(col5_noclouds)
 
-  # Training collection unmixed
+  # Testing:
+#  col_noclouds = col7_noclouds.merge(col5_noclouds)
 
+  # Training collection unmixed
   col_unmix = col_noclouds.map(unmix)
 
   # Collection NFDI
@@ -588,7 +626,8 @@ def get_regression_coefs(train_array):
   coefficients = predictors.matrixPseudoInverse().matrixMultiply(response)
 
   # Turn the results into a multi-band image.
- # global coefficientsImage
+
+ # global coefficientsImage (old, probably can delete)
   coefficientsImage = coefficients.arrayProject([0]).arrayFlatten([['coef_constant', 'coef_sin', 'coef_cos']])
 
   return coefficientsImage
@@ -614,10 +653,17 @@ def get_regression_coefs_trend(train_array):
   coefficients = predictors.matrixPseudoInverse().matrixMultiply(response)
 
   # Turn the results into a multi-band image.
-#  global coefficientsImage
+#  global coefficientsImage (old, probably can delete)
   coefficientsImage = coefficients.arrayProject([0]).arrayFlatten([['coef_constant','coef_trend', 'coef_sin', 'coef_cos']])
 
   return coefficientsImage
+
+def get_coefficient_image(collection, band):
+  # Turn regression array information into an image
+  array = ee.ImageCollection(collection).map(makeVariables_fullem).select(['constant','sin','cos',band]).toArray()
+  band_coefs_image = get_regression_coefs(array)
+
+  return band_coefs_image
 
 def deg_monitoring(year, ts_status, path, row, old_coefs, train_nfdi, first, tmean):
  # Main function for monitoring, should be looped over for each year
@@ -640,11 +686,16 @@ def deg_monitoring(year, ts_status, path, row, old_coefs, train_nfdi, first, tme
   
   # Do it again with GV and shade - for forest classification
   train_array_gv = ee.ImageCollection(train_nfdi).select('band_0').map(makeVariables_gv).toArray()
-  coefficientsImage_gv = get_regression_coefs(train_array)
+  coefficientsImage_gv = get_regression_coefs(train_array_gv)
 
   train_array_shade = ee.ImageCollection(train_nfdi).select('band_1').map(makeVariables_shade).toArray()
-  coefficientsImage_shade = get_regression_coefs(train_array)
+  coefficientsImage_shade = get_regression_coefs(train_array_shade)
 
+  train_array_npv = ee.ImageCollection(train_nfdi).select('band_2').map(makeVariables_npv).toArray()
+  coefficientsImage_npv = get_regression_coefs(train_array_npv)
+
+  train_array_soil = ee.ImageCollection(train_nfdi).select('band_3').map(makeVariables_soil).toArray()
+  coefficientsImage_soil = get_regression_coefs(train_array_soil)
 
   # check change status. If mid-change - use last year's coefficients. 
 
@@ -691,12 +742,10 @@ def deg_monitoring(year, ts_status, path, row, old_coefs, train_nfdi, first, tme
   # combine monitoring nfdi with training
   new_training = ee.ImageCollection(train_nfdi).merge(monitor_nfdi).sort('system:time_start')
 
-  return ee.List([results, coefficientsImage, new_training, train_nfdi_mean, coefficientsImage_trend, coefficientsImage_gv, coefficientsImage_shade])
+  return ee.List([results, coefficientsImage, new_training, train_nfdi_mean, coefficientsImage_trend, coefficientsImage_gv, coefficientsImage_shade, coefficientsImage_npv, coefficientsImage_soil])
 #  return ee.List([results, coefficientsImage, new_training, train_nfdi_mean, coefficientsImage_trend])
 
-
 # Retraining
-
 def mask_nochange(image):
   # mask retrain stack if there has been no change
   ischanged = ee.Image(change_dates).gt(ee.Image(0))
@@ -742,11 +791,24 @@ def regression_retrain(original_collection, year, path, row):
   retrain_predict2 = ee.ImageCollection(retrain_predict1).map(mask_nochange)
   
   retrain_predict = ee.ImageCollection(retrain_predict1).map(mask_beforechange)
-  
-  return ee.List([_coefficientsImage.rename(['Intercept', 'Sin','Cos']), retrain_predict])
 
+  # do it again for fractions
+  retrain_array_gv = ee.ImageCollection(stack_nochange_masked).select('band_0').map(makeVariables_gv).toArray()
+  r_coefficientsImage_gv = ee.Image(get_regression_coefs(retrain_array_gv)).select(['coef_constant'])
+
+  retrain_array_shade = ee.ImageCollection(stack_nochange_masked).select('band_1').map(makeVariables_shade).toArray()
+  r_coefficientsImage_shade = ee.Image(get_regression_coefs(retrain_array_shade)).select(['coef_constant'])
+
+  retrain_array_npv = ee.ImageCollection(stack_nochange_masked).select('band_2').map(makeVariables_npv).toArray()
+  r_coefficientsImage_npv = ee.Image(get_regression_coefs(retrain_array_npv)).select(['coef_constant'])
+
+  retrain_array_soil = ee.ImageCollection(stack_nochange_masked).select('band_3').map(makeVariables_soil).toArray()
+  r_coefficientsImage_soil = ee.Image(get_regression_coefs(retrain_array_soil)).select(['coef_constant'])
+  
+  return ee.List([_coefficientsImage.rename(['Intercept', 'Sin','Cos']), retrain_predict, r_coefficientsImage_gv, r_coefficientsImage_shade, r_coefficientsImage_npv, r_coefficientsImage_soil])
 
 def add_cloudscore5(image):
+   # Add cloud score for Landsat 5
    thedate = image.date()
    date_bef = thedate.advance(-1, 'day')
    date_aft = thedate.advance(1,'day')
@@ -767,6 +829,7 @@ def add_cloudscore5(image):
      return image.updateMask(mask).select(['B1','B2', 'B3','B4','B5','B7'])
 
 def add_cloudscore7(image):
+   # Add cloud score for Landsat 7
    thedate = image.date()
    date_bef = thedate.advance(-1, 'day')
    date_aft = thedate.advance(1,'day')
@@ -787,6 +850,7 @@ def add_cloudscore7(image):
      return image.updateMask(mask).select(['B1','B2', 'B3','B4','B5','B7'])
 
 def add_cloudscore8(image):
+   # Add cloud score for Landsat 8
    thedate = image.date()
    date_bef = thedate.advance(-1, 'day')
    date_aft = thedate.advance(1,'day')
@@ -815,7 +879,7 @@ train_nfdi_mean = ""
 change_dates = ""
 
 # ts_status = initial image for change detection iteration. 
-# Bands:
+# Bands (Depricated: TODO):
     # 1. Change (1) or no change (0). Used as mask. Default: 0
     # 2. Consecutive observations passed threshold. Default: 0
     # 3. Date of change if 1 = 1. Default: 0
@@ -835,25 +899,34 @@ train_nfdi = get_inputs_training(year, path, row)
 results = deg_monitoring(2000, ts_status, path, row, old_coefs, train_nfdi, True, None)
 
 tmean = results.get(3)
-otmean = ee.Image(tmean)
-final_results = ee.Image(results.get(0))
+before_rmse = ee.Image(tmean) #RMSE for training period
+
+final_results = ee.Image(results.get(0)) 
 old_coefs = results.get(1) #Coefficients without trend
-final_train = ee.ImageCollection(results.get(2))
+final_train = ee.ImageCollection(results.get(2)) #TODO
+
+# I think I can delete this TODO:
 change_output = final_results.select('band_1').eq(ee.Image(0))
+
+# Regression information for classification
 coefficientsImage_trend = ee.Image(results.get(4))
-coefficientsImage_gv = ee.Image(results.get(5))
-coefficientsImage_shade = ee.Image(results.get(6))
+coefficientsImage_gv = ee.Image(results.get(5)).select(['coef_constant'])
+coefficientsImage_shade = ee.Image(results.get(6)).select(['coef_constant'])
+coefficientsImage_npv = ee.Image(results.get(7)).select(['coef_constant'])
+coefficientsImage_soil = ee.Image(results.get(8)).select(['coef_constant'])
 
 global change_dates
 change_dates = final_results.select('band_3')
 
-
 # Retrain
-
 retrain_regression = regression_retrain(final_train, 2016, path, row)
 
 retrain_coefs = ee.Image(retrain_regression.get(0))
 retrain_predict = ee.ImageCollection(retrain_regression.get(1))
+retrain_gv = ee.Image(retrain_regression.get(2))
+retrain_shade = ee.Image(retrain_regression.get(3))
+retrain_npv = ee.Image(retrain_regression.get(4))
+retrain_soil = ee.Image(retrain_regression.get(5))
 retrain_predict_last = ee.Image(retrain_predict.toList(1000).get(-1))
 
 # Get predicted NFDI at middle of time series
@@ -874,7 +947,6 @@ original_middle = ee.Image(30).rename(['years'])
 predict_middle_original = pred_middle_retrain(original_middle, ee.Image(old_coefs).rename(['Intercept','Sin', 'Cos']))
 predict_middle_original = ee.Image(predict_middle_original)
 
-
 # Prepare output
 
 # Normalize magnitude
@@ -888,34 +960,35 @@ change_endm3 = final_results.select('band_8').divide(ee.Image(consec)).multiply(
 change_endm4 = final_results.select('band_9').divide(ee.Image(consec)).multiply(change_dates.gt(ee.Image(0)))
 
 #Forest mask
-forest_mask = predict_middle_original.gt(ee.Image(mag_thresh)).And(otmean.lt(ee.Image(rmse_thresh))).multiply(forest2000.gt(ee.Image(forest_threshold)))
-
+# Right now I am not doing this, classification instead
+#forest_mask = predict_middle_original.gt(ee.Image(mag_thresh)).And(otmean.lt(ee.Image(rmse_thresh))).multiply(forest2000.gt(ee.Image(forest_threshold)))
 
 # save_output:
-# Bands:
-    # 1. Change date
-    # 2. Short-term change magnitude
-    # 3. Predicted NFDI: End of retrain period
-    # 4. Regression constant (intercept)
-# Mask:
-    # Hansen 2000 forest mask according to % canopy cover threshold (forest_threshold)
+#bands 1-6: Change information
+save_output = change_dates.rename(['change_date']).addBands( #change date
+  [ee.Image(st_magnitude).rename(['magnitude']) #Change magnitude
+  , ee.Image(change_endm1).rename(['change_v_gv']) #Change vector GV 
+  , ee.Image(change_endm2).rename(['change_v_npv']) #Change vector NPV
+  , ee.Image(change_endm3).rename(['change_v_soil']) #Change vector Soil
+  , ee.Image(change_endm4).rename(['change_v_shade']) #Change ctor Shade
 
+#bands 7-13: Pre-disturbance training information
+  , ee.Image(old_coefs).select('coef_constant').rename(['mag_training']) #mag training
+  , ee.Image(old_coefs).select('coef_sin').rename(['sine_training']) #sine training
+  , ee.Image(old_coefs).select('coef_cos').rename(['cos_training']) #cos training
+  , ee.Image(coefficientsImage_gv).rename(['pre_gv']) # Training GV
+  , ee.Image(coefficientsImage_shade).rename(['pre_shade']) #Training Shade
+  , ee.Image(coefficientsImage_npv).rename(['pre_npv']) #Training NPV
+  , ee.Image(coefficientsImage_soil).rename(['pre_soil']) #Training SOIL
 
-save_output = change_dates.rename(['change_date']).addBands(
-  [ee.Image(st_magnitude).rename(['magnitude'])
-  , ee.Image(predict_middle).rename(['nfdi_retrain'])
-  , ee.Image(predict_middle_original).rename(['nfdi_2000'])
-  , ee.Image(coefficientsImage_trend.select('coef_trend')).rename(['slope_training'])
-  , ee.Image(change_endm1).rename(['GV'])
-  , ee.Image(change_endm2).rename(['NVV'])
-  , ee.Image(change_endm3).rename(['Soil'])
-  , ee.Image(change_endm4).rename(['Shade'])]).updateMask(forest_mask).toFloat()
-
-#save_output = change_dates.rename(['change_date']).addBands(
-#  [ee.Image(st_magnitude).rename(['magnitude'])
-#  , ee.Image(predict_middle).rename(['nfdi_retrain'])
-#  , ee.Image(predict_middle_original).rename(['nfdi_2000'])
-#  , coefficientsImage_trend.rename(['slope_training'])]).updateMask(forest_mask).toFloat()
+#Bands 14-20: Post-disturbance retrain information
+  , ee.Image(predict_middle).rename(['nfdi_retrain']) #Mag after
+  , ee.Image(retrain_coefs).select('Sin').rename(['retrain_sin']) #Sine after
+  , ee.Image(retrain_coefs).select('Cos').rename(['retrain_cos']) #Cos after
+  , ee.Image(retrain_gv).rename(['after_gv']) #After GV
+  , ee.Image(retrain_shade).rename(['after_shade']) #After Shade
+  , ee.Image(retrain_npv).rename(['after_npv']) #After NPV
+  , ee.Image(retrain_soil).rename(['after_soil'])]).toFloat() #After Soil
 
 print('Submitting task')
 
@@ -923,7 +996,19 @@ task_config = {
   'description': output,
   'scale': 30
   }
-task = ee.batch.Export.image(save_output, output, task_config)
+
+project_root='users/bullocke'
+folder_name='sample4'
+
+# Save to Engine asset or Drive?
+if asset:
+  task = ee.batch.Export.image.toAsset(
+        image=save_output, 
+        description=output,
+        assetId='{}/{}/{}'.format(project_root,folder_name,output), 
+        scale=30)
+else:
+  task = ee.batch.Export.image(save_output, output, task_config)
 task.start()
 
 

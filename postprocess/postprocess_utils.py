@@ -16,6 +16,78 @@ from skimage.util import img_as_float
 from skimage.measure import label, regionprops
 import time
 
+def do_deg_classification(config, input, deg_mag, before_copy, raw_input):
+    """ Classify degradation event based on degradation class (fire, logging,
+        water, noise, etc. Not being utilized at the moment. """
+
+    # Get proximity features 
+    ag_label = int(config['postprocessing']['deg_class']['ag_label'])
+    water_label = int(config['postprocessing']['deg_class']['water_label'])
+    dev_label = int(config['postprocessing']['deg_class']['dev_label'])
+
+    ag_prox = do_proximity(config, input, before_copy, ag_label, 'ag')
+    water_prox = do_proximity(config, input, before_copy,water_label, 'water')
+    dev_prox = do_proximity(config, input, before_copy, dev_label, 'dev')
+
+    # Get shape features
+    area, perimeter = get_shape_features(config, deg_mag, input)
+
+    # Get change vector information
+    changev_classes = config['postprocessing']['deg_class']['changev_classes']
+    changev_classes = [int(i) -1 for i in changev_classes.split(', ')]
+
+    #create stack to classify
+    stack = np.vstack((deg_mag[1,:,:][np.newaxis,:,:], 
+		        deg_mag[2,:,:][np.newaxis,:,:],
+			raw_input[changev_classes[0],:,:][np.newaxis,:,:],
+			raw_input[changev_classes[1],:,:][np.newaxis,:,:],
+			raw_input[changev_classes[2],:,:][np.newaxis,:,:],
+			raw_input[changev_classes[3],:,:][np.newaxis,:,:],
+ 		 	ag_prox[np.newaxis,:,:], 
+			water_prox[np.newaxis,:,:], 
+			dev_prox[np.newaxis,:,:],
+			area[np.newaxis,:,:],
+			perimeter[np.newaxis,:,:]))
+    raw_input = None
+
+    deg_training = config['postprocessing']['deg_class']['deg_classifier']
+
+def get_shape_features(config, deg_mag, _input):
+    """ Get shape features of change polygons """
+    
+    # convert full array into connected labels
+    ones_array = np.copy(deg_mag[0,:,:])
+    ones_array[ones_array > 0] = 1
+    ones_array[ones_array != 1] = 0
+
+    # How to get label image?
+    segment = config['postprocessing']['segmentation']['segment']
+    if segment:
+        seg_method = config['postprocessing']['segmentation']['method']
+        if seg_method == 'fz':
+            scale = int(config['postprocessing']['segmentation']['scale'])
+            sigma = float(config['postprocessing']['segmentation']['sigma'])
+            minseg = int(config['postprocessing']['segmentation']['minseg'])
+            seg_image = segment_fz(deg_mag, scale, sigma, minseg)
+	    seg_image[seg_image > 0] = 1
+            label_image = label(seg_image, neighbors=8)
+    else:
+        label_image = label(ones_array, neighbors=8)
+
+    props = regionprops(label_image)
+
+    out_area = np.copy(label_image)
+    out_perim = np.copy(label_image)
+
+    for i in props:
+        _label = i.label
+        out_area[label_image == _label] = i.area
+        out_perim[label_image == _label] = i.perimeter
+
+    save_raster_simple(out_area, _input, 'test_area.tif')
+    save_raster_simple(out_perim, _input, 'test_perim.tif')
+    return out_area, out_perim
+
 def extend_nonforest(config, buffered_array, full_array):
    """ After buffering forest, get changes that are spatially connected i
        to previous change or non-forest
@@ -38,13 +110,6 @@ def extend_nonforest(config, buffered_array, full_array):
 	            buffered_array[i,:,:][indices] = full_array[i,:,:][indices]
 
    return buffered_array
-#   skimage.measure.label
-#   skimage.measure.regionprobs
-   # maybe loop over each label? if any in corresponding values in 
-   #   buffered array are non-forest or previous change add change
-   #   data to out array
-
-   # compare to change map
 
 def buffer_nonforest(config, image, array, mask_array, change_array):
 
@@ -72,7 +137,6 @@ def buffer_nonforest(config, image, array, mask_array, change_array):
     high_mag = np.logical_or(array[mag_ind,:,:] < mag_thresh, change_array < change_thresh)
     mask_array[high_mag] = 1
 
-
     for i in range(array.shape[0]):
 	out_array[i,:,:][mask_array == 1] = array[i,:,:][mask_array == 1]
 	out_array[i,:,:][high_mag] = array[i,:,:][high_mag]
@@ -85,43 +149,89 @@ def buffer_nonforest(config, image, array, mask_array, change_array):
         for i in range(array.shape[0]):
 	    out_array[i,:,:][mask_array == 1] = array[i,:,:][mask_array == 1]
 
-#    for i in range(array.shape[0]):
-#	out_array[i,:,:][high_mag] = array[i,:,:][high_mag]
-
     return out_array
-
 
 def raster_buffer(raster_filepath, in_array, dist=1):
     """ Binary dilation using scikit image """
     struct = ndimage.generate_binary_structure(2, 2)
     out_array = ndimage.binary_dilation(in_array, structure=struct,iterations=dist).astype(in_array.dtype)
-    #save_raster_simple(out_array, raster_filepath, 'test_50dilation.tif')
     return out_array
 
-
 def convert_date(config, array):
+    """ Convert date from years since 1970 to year """
     date_band = config['general']['date_band'] - 1
     array[date_band,:,:][array[date_band,:,:] > 0] += 1970
     array[date_band,:,:] = array[date_band,:,:].astype(np.int)
     return array
 
-def get_geom_feats(config, array):
+def do_proximity(config, image, srcarray, label, _class):
+    """ Get proximity of each pixel to to certain value """
+
+    #First create a band in memory that's that's just 1s and 0s
+    src_ds = gdal.Open( image, gdal.GA_ReadOnly )
+    srcband = src_ds.GetRasterBand(1)
+    mem_rast = save_raster_memory(srcarray, image)
+    mem_band = mem_rast.GetRasterBand(1)
+
+    #Now the code behind gdal_sieve.py
+    maskband = None
+    drv = gdal.GetDriverByName('GTiff')
+
+    #Need to output sieved file
+    dst_path = config['postprocessing']['deg_class']['prox_dir']
+    
+    dst_filename = dst_path + '/' + image.split('/')[-1].split('.')[0] + '_' + _class + '.tif'
+    dst_ds = drv.Create( dst_filename,src_ds.RasterXSize, src_ds.RasterYSize,1,
+                         srcband.DataType )
+
+    wkt = src_ds.GetProjection()
+    if wkt != '':
+        dst_ds.SetProjection( wkt )
+    dst_ds.SetGeoTransform( src_ds.GetGeoTransform() )
+
+    dstband = dst_ds.GetRasterBand(1)
+
+    # Parameters
+    prog_func = None
+
+    options = []
+    options.append( 'VALUES=' + str(label) )
+
+    result = gdal.ComputeProximity(mem_band, dstband, options)#, 
+                              #callback = prog_func )
+
+    proximity = dstband.ReadAsArray()
+
+    return proximity
+
+     
+
+
+def get_geom_feats(config, array, before_class, input):
+
     # Add extra bands to the array for:
 	# 1. Max magnitude in X pixel window
 	# 2. Min magnitude in X pixel window
 	# 3. Mean magnitude in X pixel window
 	# 4+ TODO: area, shape, etc? 
 
-    mag = config['general']['mag_band'] - 1
+    mag_band = config['general']['mag_band'] - 1
     mag = array[mag_band,:,:]
 
-    window = config['postprocessing']['window']['window_size']
+    forestlabel = int(config['classification']['forestlabel'])
+
+    # create window
+    before_class = before_class.astype(np.float)
+    before_class[before_class == forestlabel] = np.nan
+    before_class[before_class == 0] = np.nan
+
+    window = config['postprocessing']['deg_class']['window_size']
  
-    max_mag = ndimage.generic_filter(mag, np.max, size=window)
+    max_mag = ndimage.generic_filter(before_class, np.nanmax, size=window)
 
-    min_mag = ndimage.generic_filter(mag, np.min, size=window)
+    max_mag[np.isnan(max_mag)] = 0
 
-    mean_mag = ndimage.generic_filter(mag, np.mean, size=window)
+    save_raster_simple(max_mag, input, 'test_classwindow.tif')
 
     dim1, dim2, dim3 = np.shape(array)
 
@@ -142,6 +252,7 @@ def get_geom_feats(config, array):
     return newar
 
 def convert_change_dif(config, array):
+    """ Turn difference in NDFI into percent change """
 
     NFDI_ind_bef = config['general']['nfdi_before'] - 1
     NFDI_ind_aft = config['general']['nfdi_after'] -1
@@ -153,7 +264,7 @@ def convert_change_dif(config, array):
     return newar
     
 def save_raster_simple(array, path, dst_filename):
-
+    """ Save an array base on an existing raster """
 
     example = gdal.Open(path)
     x_pixels = array.shape[1]  # number of pixels in x
@@ -172,27 +283,8 @@ def save_raster_simple(array, path, dst_filename):
     dataset.FlushCache()
     #dataset=None
 
-def save_raster_memory(array, path):
-    example = gdal.Open(path)
-    x_pixels = array.shape[1]  # number of pixels in x
-    y_pixels = array.shape[0]  # number of pixels in y
-    driver = gdal.GetDriverByName('MEM')
-    dataset = driver.Create('',x_pixels, y_pixels, 1,gdal.GDT_Int32) #TODO: bands
-    dataset.GetRasterBand(1).WriteArray(array[:,:])
-
-    # follow code is adding GeoTranform and Projection
-    geotrans=example.GetGeoTransform()  #get GeoTranform from existed 'data0'
-    proj=example.GetProjection() #you can get from a exsited tif or import 
-    dataset.SetGeoTransform(geotrans)
-    dataset.SetProjection(proj)
-    return dataset
-
-
 def save_raster(array, path, dst_filename):
-
-
-    #Multiply to save space
-#    array[1:,:,:]*=1000
+    """ Save the final multiband array based on an existing raster """
 
     example = gdal.Open(path)
     x_pixels = array.shape[2]  # number of pixels in x
@@ -210,9 +302,9 @@ def save_raster(array, path, dst_filename):
         dataset.GetRasterBand(b+1).WriteArray(array[b,:,:])
 
     dataset.FlushCache()
-    #dataset=None
 
 def save_raster_memory(array, path):
+    """ Save a raster into memory """
     example = gdal.Open(path)
     x_pixels = array.shape[1]  # number of pixels in x
     y_pixels = array.shape[0]  # number of pixels in y
@@ -227,74 +319,27 @@ def save_raster_memory(array, path):
     dataset.SetProjection(proj)
     return dataset
 
-def segment_fz(image, output, scale, sigma, minseg, convdate):
-    original_im = gdal.Open(image)
+def segment_fz(image, scale, sigma, minseg):
+    """ Segment array rater using Felzenwalb segentation"""
 
-    #Assign median values based on Felzenzwalb segmentation algorithm
-    three_d_image = original_im.ReadAsArray().astype(np.uint8)
-    three_d_image = three_d_image.swapaxes(0, 2)
+    three_d_image = image.swapaxes(0, 2)
     three_d_image = three_d_image.swapaxes(0, 1)
-    img = three_d_image[:,:,(0,1,3)]
+    image = three_d_image[:,:,(0,1,2)]
 
-    full_image = original_im.ReadAsArray()
-    full_image = full_image.swapaxes(0, 2)
-    full_image = full_image.swapaxes(0, 1)
+    segments_fz = felzenszwalb(image, scale=scale, sigma=sigma, min_size=minseg)
 
-    segments_fz = felzenszwalb(img, scale=scale, sigma=sigma, min_size=minseg)
-    median_image = np.zeros_like(full_image).astype(np.float32)
-    for band in range(4):
-        for seg in np.unique(segments_fz):
-            values = full_image[:,:,band][segments_fz == seg]
-
-            if band < 2:
-                if np.median(values) > 0:
-                    med = np.median(values[values>0])
-                else:
-                    med = 0
-
-            else:
-                values[np.isnan(values)] = 0
-                if np.median(values) > 0:
-                    med = np.median(values[values>0])
-                else:
-                    med = 0
-            median_image[:,:,band][segments_fz == seg] = med
-
-    #Reshape
-    s1, s2, s3 = median_image.shape
-
-    median_image = median_image.swapaxes(1, 0)
-    median_image = median_image.swapaxes(2, 0)
-    save_raster(median_image, image, output, convdate)
-    sys.exit()
+    return segments_fz
 
 def segment_km(image, output):
-    original_im = gdal.Open(image)
 
     #Assign median values based on Felzenzwalb segmentation algorithm
-    three_d_image = original_im.ReadAsArray().astype(np.uint8)
-    three_d_image = three_d_image.swapaxes(0, 2)
+    three_d_image = image.swapaxes(0, 2)
     three_d_image = three_d_image.swapaxes(0, 1)
-    img = three_d_image
+    image = three_d_image[:,:,(0,1,2)]
 
-    full_image = original_im.ReadAsArray()
-    full_image = full_image.swapaxes(0, 2)
-    full_image = full_image.swapaxes(0, 1)
+    segments_slic = slic(image, n_segments=250, compactness=10, sigma=1)
 
-    segments_slic = slic(img, n_segments=250, compactness=10, sigma=1)
-    median_image = np.zeros_like(img).astype(np.float32)
-    for band in range(3):
-        for seg in np.unique(segments_slic):
-            values = full_image[:,:,band][segments_slic == seg]
-#            mode = scipy.stats.mode(values.astype(int)).mode[0]
-#            if mode > 0:
-            med = np.median(values[values>0])
-#            else:
-#                med = 0
-            median_image[:,:,band][segments_slic == seg] = med
-
-    save_raster(median_image, image, output)
-    sys.exit()
+    return segments_slic
 
 def sieve(config, image):
 
@@ -332,7 +377,6 @@ def sieve(config, image):
     if connectedness not in [8, 4]:
 	print "connectness only supports value of 4 or 8"
 	sys.exit()
-
     result = gdal.SieveFilter(mem_band, maskband, dstband,
                               threshold, connectedness,
                               callback = prog_func )
@@ -348,7 +392,6 @@ def sieve(config, image):
     for b in range(out_img.shape[0]):
         out_img[b,:,:][sieved == 0] = 0
 
-
     dst_full = config['postprocessing']['sieve']['sieved_output']
 
     if dst_full:
@@ -357,6 +400,8 @@ def sieve(config, image):
     return out_img
 
 def get_deg_magnitude(config, ftf, sieved, dif):
+    """ Convert raw data into a usable output"""
+    #TODO: misleading function name
 
     date_band = config['general']['date_band'] - 1
     mag_band = config['general']['mag_band'] - 1
@@ -374,6 +419,7 @@ def get_deg_magnitude(config, ftf, sieved, dif):
     return deg_array
 
 def min_max_years(config, image):
+    """ Exclude data outside of min and max year desired """
     min_year = int(config['postprocessing']['minimum_year'])
     if not min_year:
 	min_year = 1990
