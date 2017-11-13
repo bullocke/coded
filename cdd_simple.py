@@ -126,14 +126,7 @@ print(output)
 #GLOBALS
 global AOI
 
-#232 66 MC
-AOI = ee.Geometry.Polygon(
-        [[[-63.3806848526001, -8.67814233247136],
-          [-63.38132858276367, -8.684421036203078],
-          [-63.37589979171753, -8.684463459519577],
-          [-63.375492095947266, -8.677781728053864]]])
-
-#Try 2
+# Spectral endmembers
 gv= [500, 900, 400, 6100, 3000, 1000]
 npv= [1400, 1700, 2200, 3000, 5500, 3000]
 soil= [2000, 3000, 3400, 5800, 6000, 5800]
@@ -177,7 +170,6 @@ def makeVariables(image):
   season = year.multiply(2 * np.pi)
   # Return an image of the predictors followed by the response.
   return image.select().addBands(ee.Image(1)).addBands(
-#    year.rename(['t'])).addBands(
     season.sin().rename(['sin'])).addBands(
     season.cos().rename(['cos'])).addBands(
     image.select(['NFDI'])).toFloat()
@@ -189,7 +181,6 @@ def makeVariables_gv(image):
   season = year.multiply(2 * np.pi)
   # Return an image of the predictors followed by the response.
   return image.select().addBands(ee.Image(1)).addBands(
-#    year.rename(['t'])).addBands(
     season.sin().rename(['sin'])).addBands(
     season.cos().rename(['cos'])).addBands(
     image.select(['band_0'])).toFloat()
@@ -201,7 +192,6 @@ def makeVariables_npv(image):
   season = year.multiply(2 * np.pi)
   # Return an image of the predictors followed by the response.
   return image.select().addBands(ee.Image(1)).addBands(
-#    year.rename(['t'])).addBands(
     season.sin().rename(['sin'])).addBands(
     season.cos().rename(['cos'])).addBands(
     image.select(['band_2'])).toFloat()
@@ -213,7 +203,6 @@ def makeVariables_soil(image):
   season = year.multiply(2 * np.pi)
   # Return an image of the predictors followed by the response.
   return image.select().addBands(ee.Image(1)).addBands(
-#    year.rename(['t'])).addBands(
     season.sin().rename(['sin'])).addBands(
     season.cos().rename(['cos'])).addBands(
     image.select(['band_3'])).toFloat()
@@ -225,7 +214,6 @@ def makeVariables_shade(image):
   season = year.multiply(2 * np.pi)
   # Return an image of the predictors followed by the response.
   return image.select().addBands(ee.Image(1)).addBands(
-#    year.rename(['t'])).addBands(
     season.sin().rename(['sin'])).addBands(
     season.cos().rename(['cos'])).addBands(
     image.select(['band_1'])).toFloat()
@@ -236,9 +224,7 @@ def makeVariables_fullem(image):
   # Compute the season in radians, one cycle per year.
   season = year.multiply(2 * np.pi)
   # Return an image of the predictors followed by the response.
-  #return image.select().addBands(ee.Image(1)).rename('constant').addBands(
   return image.select().addBands(ee.Image(1)).addBands(
-#    year.rename(['t'])).addBands(
     season.sin().rename(['sin'])).addBands(
     season.cos().rename(['cos'])).addBands(
     image.select(['NFDI','band_0','band_1','band_2','band_3'])).toFloat()
@@ -255,7 +241,6 @@ def makeVariables_trend(image):
     season.sin().rename(['sin'])).addBands(
     season.cos().rename(['cos'])).addBands(
     image.select(['NFDI'])).toFloat()
-
 
 # Add coefficients to image
 def addcoefs(image):
@@ -893,20 +878,27 @@ ts_status = ee.Image(1).addBands([ee.Image(0),ee.Image(0),ee.Image(0),ee.Image(1
 old_coefs = ee.Image(0)
 
 # First year inputs
-
 train_nfdi = get_inputs_training(year, path, row)
 
 results = deg_monitoring(2000, ts_status, path, row, old_coefs, train_nfdi, True, None)
 
+
+# TODO: These variable naems are worthless, I need to clarify
+
+# RMSE for training period
 tmean = results.get(3)
-before_rmse = ee.Image(tmean) #RMSE for training period
 
+# RMSE for training period
+before_rmse = ee.Image(tmean)
+
+# Change detection results #TODO: this name needs to change
 final_results = ee.Image(results.get(0)) 
-old_coefs = results.get(1) #Coefficients without trend
-final_train = ee.ImageCollection(results.get(2)) #TODO
 
-# I think I can delete this TODO:
-change_output = final_results.select('band_1').eq(ee.Image(0))
+# Coefficients during training period
+old_coefs = results.get(1) 
+
+# Training data as image collection
+final_train = ee.ImageCollection(results.get(2)) #TODO
 
 # Regression information for classification
 coefficientsImage_trend = ee.Image(results.get(4))
@@ -918,7 +910,7 @@ coefficientsImage_soil = ee.Image(results.get(8)).select(['coef_constant'])
 global change_dates
 change_dates = final_results.select('band_3')
 
-# Retrain
+# Retrain after disturbance
 retrain_regression = regression_retrain(final_train, 2016, path, row)
 
 retrain_coefs = ee.Image(retrain_regression.get(0))
@@ -943,11 +935,12 @@ predict_middle = pred_middle_retrain(retrain_middle, retrain_coefs)
 
 
 # Get prediction for year 2000
-original_middle = ee.Image(30).rename(['years'])
-predict_middle_original = pred_middle_retrain(original_middle, ee.Image(old_coefs).rename(['Intercept','Sin', 'Cos']))
-predict_middle_original = ee.Image(predict_middle_original)
+# I think I can delete this #TODO
+#original_middle = ee.Image(30).rename(['years'])
+#predict_middle_original = pred_middle_retrain(original_middle, ee.Image(old_coefs).rename(['Intercept','Sin', 'Cos']))
+#predict_middle_original = ee.Image(predict_middle_original)
 
-# Prepare output
+### PREPARE OUTPUT
 
 # Normalize magnitude
 # st_magnitude = short-term change magnitude
@@ -958,10 +951,6 @@ change_endm1 = final_results.select('band_6').divide(ee.Image(consec)).multiply(
 change_endm2 = final_results.select('band_7').divide(ee.Image(consec)).multiply(change_dates.gt(ee.Image(0)))
 change_endm3 = final_results.select('band_8').divide(ee.Image(consec)).multiply(change_dates.gt(ee.Image(0)))
 change_endm4 = final_results.select('band_9').divide(ee.Image(consec)).multiply(change_dates.gt(ee.Image(0)))
-
-#Forest mask
-# Right now I am not doing this, classification instead
-#forest_mask = predict_middle_original.gt(ee.Image(mag_thresh)).And(otmean.lt(ee.Image(rmse_thresh))).multiply(forest2000.gt(ee.Image(forest_threshold)))
 
 # save_output:
 #bands 1-6: Change information
