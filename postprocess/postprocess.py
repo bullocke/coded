@@ -31,7 +31,7 @@ def main(config, input, output):
  
     # Classification
     print "doing classification..."
-    before_array, after_array, ftf_array = do_classify(config, input)    
+    before_array, after_array, ftf_array, def_array = do_classify(config, input)    
     before_copy = np.copy(before_array)
 
     # Sieve
@@ -59,7 +59,7 @@ def main(config, input, output):
 
     # Use forest to forest classification to get sieved deg date, magnitude, and change in nfdi
     print "almost there..."
-    deg_mag = get_deg_magnitude(config, ftf_array, sieved_array, change_dif_array)
+    deg_mag = get_deg_magnitude(config, ftf_array, def_array, sieved_array, change_dif_array)
 
 
     deg_mag = min_max_years(config, deg_mag)

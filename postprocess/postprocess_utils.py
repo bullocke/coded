@@ -14,6 +14,7 @@ from skimage.segmentation import felzenszwalb, slic, quickshift#, watershed
 from skimage.segmentation import mark_boundaries
 from skimage.util import img_as_float
 from skimage.measure import label, regionprops
+from datetime import datetime as dt
 import time
 
 def do_deg_classification(config, input, deg_mag, before_copy, raw_input):
@@ -161,7 +162,11 @@ def convert_date(config, array):
     """ Convert date from years since 1970 to year """
     date_band = config['general']['date_band'] - 1
     array[date_band,:,:][array[date_band,:,:] > 0] += 1970
-    array[date_band,:,:] = array[date_band,:,:].astype(np.int)
+    doys = np.modf(array[date_band,:,:])[0]
+    doys = ((doys * 365).astype(int)).astype(np.str)
+    array[date_band,:,:] = np.core.defchararray.add(
+			    array[date_band,:,:].astype(np.int).
+			    astype(np.str), doys)
     return array
 
 def do_proximity(config, image, srcarray, label, _class):
@@ -203,9 +208,6 @@ def do_proximity(config, image, srcarray, label, _class):
     proximity = dstband.ReadAsArray()
 
     return proximity
-
-     
-
 
 def get_geom_feats(config, array, before_class, input):
 
@@ -399,22 +401,29 @@ def sieve(config, image):
 
     return out_img
 
-def get_deg_magnitude(config, ftf, sieved, dif):
+def get_deg_magnitude(config, ftf, deforestation, sieved, dif):
     """ Convert raw data into a usable output"""
     #TODO: misleading function name
+
+    disturbance = ftf + deforestation
 
     date_band = config['general']['date_band'] - 1
     mag_band = config['general']['mag_band'] - 1
 
     rows, cols = np.shape(ftf)
 
-    deg_array = np.zeros((3, rows, cols))
+    deg_array = np.zeros((4, rows, cols))
 
-    deg_array[0,:,:] = sieved[date_band,:,:] * ftf
+    #deg_array[0,:,:] = sieved[date_band,:,:] * ftf
+    deg_array[0,:,:] = sieved[date_band,:,:] * disturbance
 
-    deg_array[1,:,:] = (sieved[mag_band,:,:] * ftf) * 10000
+    #deg_array[1,:,:] = (sieved[mag_band,:,:] * ftf) * 10000
+    deg_array[1,:,:] = (sieved[mag_band,:,:] * disturbance) * 10000
 
-    deg_array[2,:,:] = dif * ftf
+    #deg_array[2,:,:] = dif * ftf
+    deg_array[2,:,:] = dif * disturbance
+
+    deg_array[3,:,:] = ftf + (2 * deforestation)
 
     return deg_array
 
@@ -428,7 +437,10 @@ def min_max_years(config, image):
     if not max_year:
 	max_year = 2200
 
-    bad_indices = np.logical_or(image[0,:,:] < min_year, image[0,:,:] > max_year)
+    year_image = image[0,:,:].astype(np.str).view(np.chararray).ljust(4)
+    year_image = np.array(year_image).astype(np.float) 
+
+    bad_indices = np.logical_or(year_image < min_year, year_image > max_year)
     for i in range(image.shape[0]):
         image[i,:,:][bad_indices] = 0
 
