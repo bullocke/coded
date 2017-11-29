@@ -44,5 +44,5 @@ To see the difference in forest characterization with canopy cover, see the diff
 
 The change detection is performed by using the regression coefficients to predict future NDFI observations. In this way the algorithm is being performed online, meaning that change is monitored for sequentially in time. If new NDFI observations deviate beyond a change threshold for 5 consecutive observations, a disturbance is detected. The change threshold is effectively a control on the maximum allowable residual in a 'stable' time series.  
 
-![alt text](https://raw.githubusercontent.com/bullocke/ge-cdd/master/images/images/change_mag_white.jpeg)
+![alt text](https://raw.githubusercontent.com/bullocke/ge-cdd/master/images/change_mag_white.jpeg)
 
