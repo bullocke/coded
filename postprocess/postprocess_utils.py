@@ -18,8 +18,11 @@ from datetime import datetime as dt
 import time
 
 def do_deg_classification(config, input, deg_mag, before_copy, raw_input):
-    """ Classify degradation event based on degradation class (fire, logging,
-        water, noise, etc. Not being utilized at the moment. """
+
+    """ 
+    Classify degradation event based on degradation class (fire, logging,
+    water, noise, etc. Not being utilized at the moment. 
+    """
 
     # Get proximity features 
     ag_label = int(config['postprocessing']['deg_class']['ag_label'])
@@ -54,6 +57,7 @@ def do_deg_classification(config, input, deg_mag, before_copy, raw_input):
     deg_training = config['postprocessing']['deg_class']['deg_classifier']
 
 def get_shape_features(config, deg_mag, _input):
+
     """ Get shape features of change polygons """
     
     # convert full array into connected labels
@@ -90,8 +94,10 @@ def get_shape_features(config, deg_mag, _input):
     return out_area, out_perim
 
 def extend_nonforest(config, buffered_array, full_array):
-   """ After buffering forest, get changes that are spatially connected i
-       to previous change or non-forest
+
+   """ 
+   After buffering forest, get changes that are spatially connected 
+   to previous change or non-forest
    """
 
    # convert full array into connected labels
@@ -120,7 +126,7 @@ def buffer_nonforest(config, image, array, mask_array, change_array):
     """
 
     out_array = np.zeros_like(array)
-    #Non-forest pixels are masked, so use this infomration to create forest/nf raster
+    #Non-forest pixels are masked, so use this infomration to create forest/nf
     im_open = gdal.Open(image)
 
     forest_value = config['classification']['forestlabel']
@@ -135,7 +141,8 @@ def buffer_nonforest(config, image, array, mask_array, change_array):
 
     mask_array = raster_buffer(image, mask_array, dist=dist)
 
-    high_mag = np.logical_or(array[mag_ind,:,:] < mag_thresh, change_array < change_thresh)
+    high_mag = np.logical_or(array[mag_ind,:,:] < mag_thresh, 
+                             change_array < change_thresh)
     mask_array[high_mag] = 1
 
     for i in range(array.shape[0]):
@@ -153,13 +160,18 @@ def buffer_nonforest(config, image, array, mask_array, change_array):
     return out_array
 
 def raster_buffer(raster_filepath, in_array, dist=1):
+
     """ Binary dilation using scikit image """
+
     struct = ndimage.generate_binary_structure(2, 2)
-    out_array = ndimage.binary_dilation(in_array, structure=struct,iterations=dist).astype(in_array.dtype)
+    out_array = ndimage.binary_dilation(in_array, structure=struct,
+                                        iterations=dist).astype(in_array.dtype)
     return out_array
 
 def convert_date(config, array):
+
     """ Convert date from years since 1970 to year """
+
     date_band = config['general']['date_band'] - 1
     array[date_band,:,:][array[date_band,:,:] > 0] += 1970
     doys = np.modf(array[date_band,:,:])[0]
@@ -170,6 +182,7 @@ def convert_date(config, array):
     return array
 
 def do_proximity(config, image, srcarray, label, _class):
+
     """ Get proximity of each pixel to to certain value """
 
     #First create a band in memory that's that's just 1s and 0s
@@ -211,11 +224,13 @@ def do_proximity(config, image, srcarray, label, _class):
 
 def get_geom_feats(config, array, before_class, input):
 
-    # Add extra bands to the array for:
+    """
+    Add extra bands to the array for:
 	# 1. Max magnitude in X pixel window
 	# 2. Min magnitude in X pixel window
 	# 3. Mean magnitude in X pixel window
 	# 4+ TODO: area, shape, etc? 
+    """
 
     mag_band = config['general']['mag_band'] - 1
     mag = array[mag_band,:,:]
@@ -254,6 +269,7 @@ def get_geom_feats(config, array, before_class, input):
     return newar
 
 def convert_change_dif(config, array):
+
     """ Turn difference in NDFI into percent change """
 
     NFDI_ind_bef = config['general']['nfdi_before'] - 1
@@ -266,6 +282,7 @@ def convert_change_dif(config, array):
     return newar
     
 def save_raster_simple(array, path, dst_filename):
+
     """ Save an array base on an existing raster """
 
     example = gdal.Open(path)
@@ -273,7 +290,8 @@ def save_raster_simple(array, path, dst_filename):
     y_pixels = array.shape[0]  # number of pixels in y
     bands = 1
     driver = gdal.GetDriverByName('GTiff')
-    dataset = driver.Create(dst_filename,x_pixels, y_pixels, bands ,gdal.GDT_Int32)
+    dataset = driver.Create(dst_filename,x_pixels, y_pixels, bands, 
+                            gdal.GDT_Int32)
 
     geotrans=example.GetGeoTransform()  #get GeoTranform from existed 'data0'
     proj=example.GetProjection() #you can get from a exsited tif or import 
@@ -283,7 +301,6 @@ def save_raster_simple(array, path, dst_filename):
     dataset.GetRasterBand(1).WriteArray(array[:,:])
 
     dataset.FlushCache()
-    #dataset=None
 
 def save_raster(array, path, dst_filename):
     """ Save the final multiband array based on an existing raster """
@@ -293,7 +310,8 @@ def save_raster(array, path, dst_filename):
     y_pixels = array.shape[1]  # number of pixels in y
     bands = array.shape[0]
     driver = gdal.GetDriverByName('GTiff')
-    dataset = driver.Create(dst_filename,x_pixels, y_pixels, bands ,gdal.GDT_Int32)
+    dataset = driver.Create(dst_filename,x_pixels, 
+                            y_pixels, bands ,gdal.GDT_Int32)
 
     geotrans=example.GetGeoTransform()  #get GeoTranform from existed 'data0'
     proj=example.GetProjection() #you can get from a exsited tif or import 
@@ -306,12 +324,14 @@ def save_raster(array, path, dst_filename):
     dataset.FlushCache()
 
 def save_raster_memory(array, path):
+
     """ Save a raster into memory """
+
     example = gdal.Open(path)
     x_pixels = array.shape[1]  # number of pixels in x
     y_pixels = array.shape[0]  # number of pixels in y
     driver = gdal.GetDriverByName('MEM')
-    dataset = driver.Create('',x_pixels, y_pixels, 1,gdal.GDT_Int32) #TODO: bands
+    dataset = driver.Create('',x_pixels, y_pixels, 1,gdal.GDT_Int32)
     dataset.GetRasterBand(1).WriteArray(array[:,:])
 
     # follow code is adding GeoTranform and Projection
@@ -319,9 +339,11 @@ def save_raster_memory(array, path):
     proj=example.GetProjection() #you can get from a exsited tif or import 
     dataset.SetGeoTransform(geotrans)
     dataset.SetProjection(proj)
+
     return dataset
 
 def segment_fz(image, scale, sigma, minseg):
+
     """ Segment array rater using Felzenwalb segentation"""
 
     three_d_image = image.swapaxes(0, 2)
@@ -334,7 +356,8 @@ def segment_fz(image, scale, sigma, minseg):
 
 def segment_km(image, output):
 
-    #Assign median values based on Felzenzwalb segmentation algorithm
+    """ Assign median values based on Felzenzwalb segmentation algorithm """
+
     three_d_image = image.swapaxes(0, 2)
     three_d_image = three_d_image.swapaxes(0, 1)
     image = three_d_image[:,:,(0,1,2)]
@@ -345,7 +368,8 @@ def segment_km(image, output):
 
 def sieve(config, image):
 
-    #First create a band in memory that's that's just 1s and 0s
+    """ First create a band in memory that's that's just 1s and 0s """
+
     src_ds = gdal.Open( image, gdal.GA_ReadOnly )
     srcband = src_ds.GetRasterBand(1)
     srcarray = srcband.ReadAsArray()
@@ -402,6 +426,7 @@ def sieve(config, image):
     return out_img
 
 def get_deg_magnitude(config, ftf, deforestation, sieved, dif):
+
     """ Convert raw data into a usable output"""
     #TODO: misleading function name
 
@@ -414,13 +439,10 @@ def get_deg_magnitude(config, ftf, deforestation, sieved, dif):
 
     deg_array = np.zeros((4, rows, cols))
 
-    #deg_array[0,:,:] = sieved[date_band,:,:] * ftf
     deg_array[0,:,:] = sieved[date_band,:,:] * disturbance
 
-    #deg_array[1,:,:] = (sieved[mag_band,:,:] * ftf) * 10000
     deg_array[1,:,:] = (sieved[mag_band,:,:] * disturbance) * 10000
 
-    #deg_array[2,:,:] = dif * ftf
     deg_array[2,:,:] = dif * disturbance
 
     deg_array[3,:,:] = ftf + (2 * deforestation)
@@ -431,7 +453,7 @@ def min_max_years(config, image):
     """ Exclude data outside of min and max year desired """
     min_year = int(config['postprocessing']['minimum_year'])
     if not min_year:
-	min_year = 1990
+	min_year = 1980
 
     max_year = int(config['postprocessing']['maximum_year'])
     if not max_year:

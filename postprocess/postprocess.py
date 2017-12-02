@@ -32,7 +32,7 @@ def main(config, input, output):
     # Classification
     print "doing classification..."
     before_array, after_array, ftf_array, def_array = do_classify(config, input)    
-    before_copy = np.copy(before_array)
+#    before_copy = np.copy(before_array)
 
     # Sieve
     print "doing sieve..."
@@ -48,18 +48,25 @@ def main(config, input, output):
     # Get change difference
     change_dif_array = convert_change_dif(config, sieved_array)
 
+    #clear some memory
+    after_array = None
+
     # Buffer non-forest
     if config['postprocessing']['buffer']['do_buffer']:
 	print "buffering non-forest pixels..."
-        sieved_array = buffer_nonforest(config, input, sieved_array, before_array, change_dif_array)
+        sieved_array = buffer_nonforest(config, input, 
+                                        sieved_array, before_array, 
+                                        change_dif_array)
 
         if config['postprocessing']['do_connect']:
-    	    print "returning areas that connect to previous change or non forest..."
+    	    print "returning areas that connect to non forest..."
             sieved_array = extend_nonforest(config, sieved_array, full_array)
 
-    # Use forest to forest classification to get sieved deg date, magnitude, and change in nfdi
+    # Use ftf class to get sieved deg date, magnitude, and change in nfdi
     print "almost there..."
-    deg_mag = get_deg_magnitude(config, ftf_array, def_array, sieved_array, change_dif_array)
+    deg_mag = get_deg_magnitude(config, ftf_array, 
+                                def_array, sieved_array, 
+                                 change_dif_array)
 
 
     deg_mag = min_max_years(config, deg_mag)
@@ -69,12 +76,13 @@ def main(config, input, output):
     # Deg classification
 
     # first clear up some memory
-    after_array = None
     ftf_array = None
 
     #Geometry features
     # TODO
-    #deg_class = do_deg_classification(config, input, deg_mag, before_copy, full_array)
+    #deg_class = do_deg_classification(config, input, 
+    #				       deg_mag, before_copy, 
+    #                                   full_array)
 
     #window_array = get_geom_feats(config, deg_mag, before_copy, input)
 
