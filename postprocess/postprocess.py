@@ -31,13 +31,12 @@ def main(config, input, output):
  
     # Classification
     print "doing classification..."
-    before_array, after_array, ftf_array, def_array = do_classify(config, input)    
+    before_full, before_array, after_array, ftf_array, def_array = do_classify(config, input)    
 #    before_copy = np.copy(before_array)
 
     # Sieve
     print "doing sieve..."
     sieved_array = sieve(config, input)
-
 
     print "cleaning it up a bit..."
     #Convert date from years since 1970 to year
@@ -55,7 +54,7 @@ def main(config, input, output):
     if config['postprocessing']['buffer']['do_buffer']:
 	print "buffering non-forest pixels..."
         sieved_array = buffer_nonforest(config, input, 
-                                        sieved_array, before_array, 
+                                        sieved_array,before_array, 
                                         change_dif_array)
 
         if config['postprocessing']['do_connect']:
@@ -66,7 +65,7 @@ def main(config, input, output):
     print "almost there..."
     deg_mag = get_deg_magnitude(config, ftf_array, 
                                 def_array, sieved_array, 
-                                 change_dif_array)
+                                 change_dif_array, before_full)
 
 
     deg_mag = min_max_years(config, deg_mag)

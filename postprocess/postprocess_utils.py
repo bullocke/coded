@@ -425,7 +425,7 @@ def sieve(config, image):
 
     return out_img
 
-def get_deg_magnitude(config, ftf, deforestation, sieved, dif):
+def get_deg_magnitude(config, ftf, deforestation, sieved, dif, before):
 
     """ Convert raw data into a usable output"""
     #TODO: misleading function name
@@ -444,8 +444,14 @@ def get_deg_magnitude(config, ftf, deforestation, sieved, dif):
     deg_array[1,:,:] = (sieved[mag_band,:,:] * disturbance) * 10000
 
     deg_array[2,:,:] = dif * disturbance
+ 
+    # 8 = deforestation
+    # 7 = degradation
+    deg_array[3,:,:] = (7 * ftf) + (8 * deforestation)
 
-    deg_array[3,:,:] = ftf + (2 * deforestation)
+    # Non-disturbed = class before
+    nondisturbed = np.where(disturbance == 0)
+    deg_array[3,:,:][nondisturbed] = before[nondisturbed]
 
     return deg_array
 
@@ -463,7 +469,7 @@ def min_max_years(config, image):
     year_image = np.array(year_image).astype(np.float) 
 
     bad_indices = np.logical_or(year_image < min_year, year_image > max_year)
-    for i in range(image.shape[0]):
+    for i in range(image.shape[0] - 1):
         image[i,:,:][bad_indices] = 0
 
     return image
