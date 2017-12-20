@@ -68,20 +68,21 @@ def main(config, input, output):
                                  change_dif_array, before_full)
 
 
-    deg_mag = min_max_years(config, deg_mag)
+    deg_mag = min_max_years(config, deg_mag, before_full)
     # Segmentation
     # TODO 
 
-    # Deg classification
 
     # first clear up some memory
     ftf_array = None
 
     #Geometry features
     # TODO
-    #deg_class = do_deg_classification(config, input, 
-    #				       deg_mag, before_copy, 
-    #                                   full_array)
+    # Deg classification
+    print 'making degradatin classification raster'
+#    deg_class = do_deg_classification(config, input, 
+#        			       deg_mag, before_full, 
+#                                       full_array)
 
     #window_array = get_geom_feats(config, deg_mag, before_copy, input)
 

@@ -15,12 +15,13 @@ from skimage.segmentation import mark_boundaries
 from skimage.util import img_as_float
 from skimage.measure import label, regionprops
 from datetime import datetime as dt
+#import otbApplication
 import time
 
 def do_deg_classification(config, input, deg_mag, before_copy, raw_input):
 
     """ 
-    Classify degradation event based on degradation class (fire, logging,
+    Create raster for classification  event based on degradation class (fire, logging,
     water, noise, etc. Not being utilized at the moment. 
     """
 
@@ -40,21 +41,56 @@ def do_deg_classification(config, input, deg_mag, before_copy, raw_input):
     changev_classes = config['postprocessing']['deg_class']['changev_classes']
     changev_classes = [int(i) -1 for i in changev_classes.split(', ')]
 
+    # Get edge information
+    edge = get_edge(config, input)
+
     #create stack to classify
     stack = np.vstack((deg_mag[1,:,:][np.newaxis,:,:], 
 		        deg_mag[2,:,:][np.newaxis,:,:],
-			raw_input[changev_classes[0],:,:][np.newaxis,:,:],
-			raw_input[changev_classes[1],:,:][np.newaxis,:,:],
-			raw_input[changev_classes[2],:,:][np.newaxis,:,:],
-			raw_input[changev_classes[3],:,:][np.newaxis,:,:],
+			raw_input[changev_classes[0],:,:][np.newaxis,:,:] * 100,
+			raw_input[changev_classes[1],:,:][np.newaxis,:,:] * 100,
+			raw_input[changev_classes[2],:,:][np.newaxis,:,:] * 100,
+			raw_input[changev_classes[3],:,:][np.newaxis,:,:] * 100,
  		 	ag_prox[np.newaxis,:,:], 
 			water_prox[np.newaxis,:,:], 
 			dev_prox[np.newaxis,:,:],
 			area[np.newaxis,:,:],
-			perimeter[np.newaxis,:,:]))
+			perimeter[np.newaxis,:,:],
+                        edge[np.newaxis,:,:]))
     raw_input = None
 
-    deg_training = config['postprocessing']['deg_class']['deg_classifier']
+#    deg_training = config['postprocessing']['deg_class']['deg_classifier']
+    dst_path = config['postprocessing']['deg_class']['degclass_dir']
+    dst_filename = dst_path + '/' + input.split('/')[-1].split('.')[0] + '_degclass.tif'
+    save_raster(stack, input, dst_filename)
+    
+
+
+def get_edge(config, input):
+
+    """ Get sobel edge extraction
+    #NOTE: Dependency requirements on the BU Cluster now require this be ran seperately
+    #The code below would work (uncommented) if OTB could be loaded
+    """
+
+    # The following line creates an instance of the EdgeExtraction application
+#    EdgeExtraction = otbApplication.Registry.CreateApplication("EdgeExtraction")
+
+    # The following lines set all the application parameters:
+#    EdgeExtraction.SetParameterString("in", input)
+
+#    EdgeExtraction.SetParameterInt("channel", 2) #TODO: set band
+
+    dst_path = config['postprocessing']['deg_class']['edge_dir']
+    dst_filename = dst_path + '/' + input.split('/')[-1].split('.')[0] + '_edge.tif'
+#    EdgeExtraction.SetParameterString("out", dst_filename)
+
+    # The following line execute the application
+#    EdgeExtraction.ExecuteAndWriteOutput()
+
+    im_op = gdal.Open(dst_filename)
+    im_ar = im_op.ReadAsArray()
+    return im_ar
 
 def get_shape_features(config, deg_mag, _input):
 
@@ -366,6 +402,56 @@ def segment_km(image, output):
 
     return segments_slic
 
+def sieve_strata(config, image):
+
+    """ First create a band in memory that's that's just 1s and 0s """
+
+    src_ds = gdal.Open( image, gdal.GA_ReadOnly )
+    srcband = src_ds.GetRasterBand(1)
+    srcarray = srcband.ReadAsArray()
+
+    mem_rast = save_raster_memory(srcarray, image)
+    mem_band = mem_rast.GetRasterBand(1)
+
+    #Now the code behind gdal_sieve.py
+    maskband = None
+    drv = gdal.GetDriverByName('GTiff')
+
+    #Need to output sieved file
+    dst_path = config['postprocessing']['sieve']['sieve_file']
+    dst_filename = dst_path + '/' + image.split('/')[-1].split('.')[0] + '_sieve_mask.tif'
+
+    dst_ds = drv.Create( dst_filename,src_ds.RasterXSize, src_ds.RasterYSize,1,
+                         srcband.DataType )
+    wkt = src_ds.GetProjection()
+    if wkt != '':
+        dst_ds.SetProjection( wkt )
+    dst_ds.SetGeoTransform( src_ds.GetGeoTransform() )
+
+    dstband = dst_ds.GetRasterBand(1)
+
+    # Parameters
+    prog_func = None
+
+    threshold = config['postprocessing']['sieve']['threshold_strata']
+    connectedness = config['postprocessing']['sieve']['connectedness']
+    if connectedness not in [8, 4]:
+	print "connectness only supports value of 4 or 8"
+	sys.exit()
+    result = gdal.SieveFilter(mem_band, maskband, dstband,
+                              threshold, connectedness,
+                              callback = prog_func )
+
+    sieved = dstband.ReadAsArray()
+
+    dst_full = config['postprocessing']['sieve']['sieved_output']
+
+    if dst_full:
+	dst_full_name = dst_full + '/' + image.split('/')[-1].split('.')[0] + '_sieved.tif'
+        save_raster_simple(sieved, image, dst_full_name)
+
+    return sieved
+
 def sieve(config, image):
 
     """ First create a band in memory that's that's just 1s and 0s """
@@ -384,7 +470,7 @@ def sieve(config, image):
 
     #Need to output sieved file
     dst_path = config['postprocessing']['sieve']['sieve_file']
-    dst_filename = dst_path + '/' + image.split('/')[-1].split('.')[0] + '_sieve.tif'
+    dst_filename = dst_path + '/' + image.split('/')[-1].split('.')[0] + '_sieve_mask.tif'
 
     dst_ds = drv.Create( dst_filename,src_ds.RasterXSize, src_ds.RasterYSize,1,
                          srcband.DataType )
@@ -421,7 +507,8 @@ def sieve(config, image):
     dst_full = config['postprocessing']['sieve']['sieved_output']
 
     if dst_full:
-        save_raster(out_img, image, dst_full, convdate, False, change_dif)
+	dst_full_name = dst_full + '/' + image.split('/')[-1].split('.')[0] + '_sieved.tif'
+        save_raster(out_img, image, dst_full_name)
 
     return out_img
 
@@ -455,7 +542,7 @@ def get_deg_magnitude(config, ftf, deforestation, sieved, dif, before):
 
     return deg_array
 
-def min_max_years(config, image):
+def min_max_years(config, image, before):
     """ Exclude data outside of min and max year desired """
     min_year = int(config['postprocessing']['minimum_year'])
     if not min_year:
@@ -471,5 +558,7 @@ def min_max_years(config, image):
     bad_indices = np.logical_or(year_image < min_year, year_image > max_year)
     for i in range(image.shape[0] - 1):
         image[i,:,:][bad_indices] = 0
+
+    image[image.shape[0]-1,:,:][bad_indices] = before[bad_indices]
 
     return image

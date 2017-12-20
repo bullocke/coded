@@ -5,7 +5,7 @@ Parameters:
   input: list of time-sequential cdd output rasters
   output: location to save output raster
 
-Usage: make_strata_map.py [options] <param> <input> <output>
+Usage: make_strata_map.py [options] <param> <image1> <image2> <image3> <output>
 
   --allclasses=<AC>      output all class strata instead of f/nf
 
@@ -19,7 +19,7 @@ import os
 import numpy as np
 import yaml
 import pandas as pd
-from postprocess_utils import save_raster_simple
+from postprocess_utils import save_raster, sieve
 
 def main(inputs, opts, output):
 
@@ -32,7 +32,6 @@ def main(inputs, opts, output):
 	3: deforestation
 	4: degradation
 	5: degradation -> deforestation
-	6: deforestation -> other -> regrowth
 
     Input stratas represent:
 	1-5: stable class during that time period
@@ -42,6 +41,7 @@ def main(inputs, opts, output):
 
     # Parse param file
     strata_band = opts['general']['strata_band']
+    date_band = opts['general']['date_band']
     forestlabel = opts['classification']['forestlabel']
 
     # Make strata input raster
@@ -51,35 +51,52 @@ def main(inputs, opts, output):
     im_ar = None
 
     stratas = np.zeros((dim1, dim2, len(inputs)))
-    outstrata = np.zeros((dim1, dim2))
+    years = np.zeros((dim1, dim2, len(inputs)))
+    outstrata = np.zeros((3, dim1, dim2))
 
     for i in range(len(inputs)):
 	im_op = gdal.Open(inputs[i])
 	stratas[:,:,i] = im_op.GetRasterBand(strata_band).ReadAsArray()
+	years[:,:,i] = im_op.GetRasterBand(date_band).ReadAsArray()
 
     for _y in range(dim1):
-        print _y
 	for _x in range(dim2):
 	    # Get all years data
 	    data = stratas[_y,_x,:]
 
 	    # LABEL: 1 -- stable forest
 	    if np.all(data == forestlabel):
-		outstrata[_y, _x] = 1
+		outstrata[0, _y, _x] = 1
+		outstrata[1, _y, _x] = 0
+		outstrata[2, _y, _x] = 0
+
 	    # LABEL: 2 -- stable non-forest
 	    elif np.all(data <= forestlabel) and np.any(data != 0):
-		outstrata[_y, _x] = 2
+		outstrata[0, _y, _x] = 2
+		outstrata[1, _y, _x] = 0
+		outstrata[2, _y, _x] = 0
 
-            # Test for degradation
+            # Degradation
 	    degradation = np.where(data == 7)[0]
 	    if degradation.shape[0] > 0:
 
 		# LABEL: 4 -- degradation (may be overwritten by deg->def)
-		outstrata[_y, _x] = 4
+		outstrata[0, _y, _x] = 4
+		outstrata[1, _y, _x] = years[_y,_x,:][degradation[0]]
+
+		# Multiple degradation events
+		if degradation.shape[0] > 1:
+		    outstrata[2, _y, _x] = years[_y,_x,:][degradation[1]]
+
+		# Degradation before deforestation?
 		after_deg = data[degradation[0]:]
-		deg_to_def = np.any(np.in1d(after_deg, [1,2,3,4,8]))
-		if deg_to_def:
-		    outstrata[_y, _x] = 6
+		deg_to_def = np.in1d(after_deg, [1,2,3,4,8])
+		if deg_to_def.sum() > 1:
+		    outstrata[0, _y, _x] = 5
+		    if np.all(years[_y,_x,:][deg_to_def] == 0):
+  		        outstrata[2, _y, _x] =  outstrata[1, _y, _x]
+		    else:
+			outstrata[2, _y, _x] = years[_y,_x,:][deg_to_def][0]
 
 	    # Test for deforestation
 	    deforestation = np.where(data == 8)[0]
@@ -88,27 +105,34 @@ def main(inputs, opts, output):
 		after_def = data[deforestation[0]:]
 		bef_def = data[:deforestation[0]]
 
-		regrowth = np.any(np.in1d(after_def, [forestlabel]))
 		deg_def = np.any(np.in1d(bef_def, [7]))
 
-		# LABEL: 5 -- deforestation -> regrowth?
-		if regrowth:
-		    outstrata[_y, _x] = 7
 		# LABEL: 5 -- deg before def? 
-		elif deg_def:
-		    outstrata[_y,_x] = 6
+		if deg_def:
+		    outstrata[0, _y,_x] = 5
+		    possible_dates = np.where(years[_y, _x, :] > 0)[0]
+		    outstrata[2, _y,_x] = years[_y, _x, :][possible_dates[1]]
 		# LABEL: 3 -- deforestation alone
 		else:
-		    outstrata[_y,_x] = 3
+		    outstrata[0, _y,_x] = 3
+		    possible_dates = np.where(years[_y, _x, :] > 0)[0]
+		    outstrata[1, _y,_x] = years[_y, _x, :][possible_dates[0]]
 
-    save_raster_simple(outstrata, inputs[0], output)
+    save_raster(outstrata, inputs[0], output)
+    sieve(opts, output)
 
 if __name__ == '__main__':
     args = docopt(__doc__, version='0.6.2')
 
 param=args['<param>']
 output=args['<output>']
-inputs=args['<input>'].split(' ')
+inputs = []
+image1=args['<image1>']
+image2=args['<image2>']
+image3=args['<image3>']
+inputs.append(image1)
+inputs.append(image2)
+inputs.append(image3)
 
 try:
     with open(param, 'r') as f:
