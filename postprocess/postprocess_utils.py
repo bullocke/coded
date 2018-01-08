@@ -18,6 +18,67 @@ from datetime import datetime as dt
 #import otbApplication
 import time
 
+def add_highconf_deg(deg_mag, config):
+    """
+    Re-classify pixels classified as deforested that match criteria of high
+    probability degradation
+    """
+
+    dif_band = config['general']['dif_band'] - 1
+    mag_band = config['general']['mag_band'] - 1
+    strata_band = config['general']['strata_band'] - 1
+
+    dif_thresh = config['classification']['change_to_deg']['dif_thresh']
+
+    high_conf_deg = np.where(deg_mag[dif_band,:,:] >= dif_thresh) 
+
+    deg_mag[strata_band,:,:][high_conf_deg] = 7 #Degradation
+
+    return deg_mag
+
+def add_potential_change(deg_mag, input, config):
+
+    """
+    Adds band to post-processing output with all original pixels detected as a
+    disturbance before post-processing
+    """
+
+    im_op = gdal.Open(input)
+    dist_ar = im_op.GetRasterBand(1).ReadAsArray()
+
+    # Add a year buffer
+    min_year = int(config['postprocessing']['minimum_year']) - 1
+    max_year = int(config['postprocessing']['maximum_year']) + 1
+
+    fixed_years = convert_date(config, dist_ar)
+    year_image = fixed_years.astype(np.str).view(np.chararray).ljust(4)
+    year_image = np.array(year_image).astype(np.float) 
+
+    bad_indices = np.logical_or(year_image < min_year, year_image > max_year)
+    dist_ar[:,:][bad_indices] = 0
+
+    #Potential disturbance withinin forest 
+    dist_indices = np.where(dist_ar > 0)
+    dist_ar[dist_indices] = 1
+
+    #Potential degradation within deforestation
+    dif_band = config['general']['dif_band'] - 1
+    mag_band = config['general']['mag_band'] - 1
+    strata_band = config['general']['strata_band'] - 1
+
+    dif_thresh = config['postprocessing']['possible_deg']['dif_thresh']
+    pos_deg_indices = np.where((deg_mag[strata_band,:,:] == 8) & 
+		               (deg_mag[dif_band] >= dif_thresh))
+    dist_ar[pos_deg_indices] = 2
+
+    full_output = np.stack((deg_mag[0,:,:],
+			    deg_mag[1,:,:],
+			    deg_mag[2,:,:],
+			    deg_mag[3,:,:],
+			    dist_ar))
+
+    return full_output
+
 def do_deg_classification(config, input, deg_mag, before_copy, raw_input):
 
     """ 
@@ -209,12 +270,20 @@ def convert_date(config, array):
     """ Convert date from years since 1970 to year """
 
     date_band = config['general']['date_band'] - 1
-    array[date_band,:,:][array[date_band,:,:] > 0] += 1970
-    doys = np.modf(array[date_band,:,:])[0]
-    doys = ((doys * 365).astype(int)).astype(np.str)
-    array[date_band,:,:] = np.core.defchararray.add(
-			    array[date_band,:,:].astype(np.int).
-			    astype(np.str), doys)
+    if len(array.shape) == 3:
+        array[date_band,:,:][array[date_band,:,:] > 0] += 1970
+        doys = np.modf(array[date_band,:,:])[0]
+        doys = ((doys * 365).astype(int)).astype(np.str)
+        array[date_band,:,:] = np.core.defchararray.add(
+	    		       array[date_band,:,:].astype(np.int).
+			       astype(np.str), doys)
+    else:
+        array[array > 0] += 1970
+        doys = np.modf(array)[0]
+        doys = ((doys * 365).astype(int)).astype(np.str)
+        array = np.core.defchararray.add(
+	        array.astype(np.int).
+	        astype(np.str), doys)
     return array
 
 def do_proximity(config, image, srcarray, label, _class):
