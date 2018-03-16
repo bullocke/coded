@@ -34,7 +34,7 @@ To find degraded or damaged forests, the original state of the forest must first
 
 These regression components are used to differentiate a forest or forested grassland (including cerrado) from other land covers. The following chart shows how the land covers differ based on regression RMSE and magnitude based on 1250 training locations across the Amazon basin: 
 
-![alt text](https://raw.githubusercontent.com/bullocke/ge-cdd/master/images/NFDI_landcover_classification.jpg)
+![alt text](https://raw.githubusercontent.com/bullocke/ge-cdd/master/images/NDFI_mag_rmse_training_4.jpg)
 
 The simple version of the algorithm (Simple-CDD), also excludes areas with high trend components to filter out actively changing landscapes (such as regrowing forests). The model is then refit over the training period without the trend term. The reason for removing the trend term is to be able to predict into the future without triggering a change when the gradual change process ends (such as the saturation, or natural halting of regrowth). The full CDD algorithm refits the model every year, accounting for these changes. However, the computational intensity of the regression makes the process significantly slower. 
 
@@ -49,5 +49,12 @@ To see the difference in forest characterization with canopy cover, see the diff
 
 The change detection is performed by using the regression coefficients to predict future NDFI observations. In this way the algorithm is being performed online, meaning that change is monitored for sequentially in time. If new NDFI observations deviate beyond a change threshold for 5 consecutive observations, a disturbance is detected. The change threshold is effectively a control on the maximum allowable residual in a 'stable' time series.  
 
-![alt text](https://raw.githubusercontent.com/bullocke/ge-cdd/master/images/change_mag_white.jpeg)
+![alt text](https://raw.githubusercontent.com/bullocke/ge-cdd/master/images/flowchart_March2018.png)
 
+The algorithm is run continuously through time. In the following example you can see a pixel location that undergoes a disturbance event (likely a fire or thinning), however there is no change in land cover. Therefore the disturbance will be labeled as a degradation event. For every disturbance, there is an associated change date, magnitude, post-disturbance recovery, post-disturbance land cover, and disturbance label. 
+
+![alt text](https://raw.githubusercontent.com/bullocke/ge-cdd/master/images/p225r068_maps6.jpeg)
+
+## Assessment
+
+Between any two time points during a study time period a map of deforestation and degradation can be made. The maps can be used to create a stratified sample in order to calculate unbiased area estimates of the different disturbance classes.  
