@@ -40,7 +40,7 @@ The simple version of the algorithm (Simple-CDD), also excludes areas with high 
 
 An important step in this process is not just forest classification, but forest characterization. By calculating the training NDFI regression magnitude, change in NDFI can then be calculated relative to original condition. In this manner, degradation is defined as its relation to original state, not just the NDFI at the current time. A good example of this distinction is in forested cerrado, which exists naturally in a state of non-continuous canopy cover. The cerrado will naturally have a lower NDFI than a closed-canopy forest, but that does not mean it is degraded. This difference alludes to the difficulty in classifying a degraded forest based on a single image alone. 
 
-To see the difference in forest characterization with canopy cover, see the difference in NDFI between a dense congruent canopy in Rondôia (top), and a thinner forested cerrado in Mato Groso (bottom, images courtesy Google Earth):
+To see the difference in forest characterization with canopy cover, see the difference in NDFI between a dense congruent canopy in Rondônia (top), and a thinner forested cerrado in Mato Groso (bottom, images courtesy Google Earth):
 
 ![alt text](https://raw.githubusercontent.com/bullocke/ge-cdd/master/images/DenseForest_both3.jpg)
 ![alt text](https://raw.githubusercontent.com/bullocke/ge-cdd/master/images/ThinForest_both3.jpg)
@@ -51,7 +51,11 @@ The change detection is performed by using the regression coefficients to predic
 
 ![alt text](https://raw.githubusercontent.com/bullocke/ge-cdd/master/images/flowchart_March2018.png)
 
-The algorithm is run continuously through time. In the following example you can see a pixel location that undergoes a disturbance event (likely a fire or thinning), however there is no change in land cover. Therefore the disturbance will be labeled as a degradation event. For every disturbance, there is an associated change date, magnitude, post-disturbance recovery, post-disturbance land cover, and disturbance label. 
+The algorithm is run continuously through time. In the following example you can see a pixel location that undergoes a disturbance due to a small logging event. The disturbance does not result in a change in landcover and is therefore degradation. Later, a higher-magnitude disturbance results in a conversion to pasture land. The second disturbance is therefore labeled as deforestation. 
+
+![alt text](https://raw.githubusercontent.com/bullocke/ge-cdd/master/images/ts_images.jpg)
+
+For every disturbance, there is an associated change date, magnitude, post-disturbance recovery, post-disturbance land cover, and disturbance label. 
 
 ![alt text](https://raw.githubusercontent.com/bullocke/ge-cdd/master/images/p225r068_maps6.jpeg)
 
