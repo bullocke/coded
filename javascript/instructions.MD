@@ -4,11 +4,11 @@
 
 Change detection is performed using the 'submit_change' file. There are 4 primary inputs to the algorithm: training data to perform land cover classification, a parameter file containing various model parameters, a FeatureCollection defining the study area, and the previous iteration of the algorithm, it it exists. 
 
-### Training data
+#### Training Data
 
 Training data must be a single FeatureCollection containing points with a unique class identifier named 'label'. The training data must represent the class during the entire training period. 
 
-### Parameters
+#### Parameters
 
 | Parameter | Description | Example |
 | --- | --- | --- |
@@ -28,10 +28,28 @@ Training data must be a single FeatureCollection containing points with a unique
 | cloud | cloud endmember reflectance values for each band | see example |  
 | forestLabel | label of forest in the training data | 1 |
 
-### Region
+#### Region
 
 The study region must be defined using a FeatureCollection named 'region'. The region can be defined in the Earth Engine by drawing a 'shape' and naming it 'region'. The region can cross Landsat Path/Rows, but too big of an area will likely cause errors.
 
-### Previous iteration
+#### Previous Iteration
 
 To reduce computational intensity only one change is detected for every location over the monitoring period. However, multiple changes for the same location can be detected by submitting multiple jobs, with 'previousIteration' defined as the output of the previous change detection. For the first iteration 'previousIteration' should be set to 0. 
+
+### Outputs
+
+The output of the change detection is an image with various information. For every iteration, a set of the bands will be created with a number representing the iteration. 
+
+| band name | Description |
+| --- | --- |
+| changeDate | date of change in years since 1970
+| changeMag | change magnitude defined as the average change score during the change period |
+| numObs | number of observations during monitoring period before change |
+| regrowthSlope | slope of NDFI immedietely following the change |
+| postDistClass | post-disturbance landcover class according to 'label' in training data |
+| difNDFI | NDFI magnitude after disturbance compared to before expressed as proportion * 100 | 
+| firstRegrowth | first year after a disturbance classified as forest |
+| forestTraining | value of 1 if the location was classified as forest during training period |
+| cusumStat | CUSUM test statistic for omission test |
+| cusumDate | date of maximum CUSUM test statistic | 
+| TrainForestProb | RF's forest classification probability during training period |
