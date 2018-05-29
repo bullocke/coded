@@ -2,7 +2,9 @@
 
 ### Change Detection
 
-Change detection is performed using the 'submit_change' file. There are 4 primary inputs to the algorithm: training data to perform land cover classification, a parameter file containing various model parameters, a FeatureCollection defining the study area, and the previous iteration of the algorithm, it it exists. 
+Change detection is performed using the 'submit_change' file. To use the most recent version of CODED, a copy of 'submit_change' can be made locally with the utility paths directing towards my repository. Alternatively, the repository can be cloned, in which case the paths would have to be adjusted accordingly. 
+
+There are 4 primary inputs to the algorithm: training data to perform land cover classification, a parameter file containing various model parameters, a FeatureCollection defining the study area, and the previous iteration of the algorithm, it it exists. 
 
 #### Training Data
 
