@@ -4,7 +4,7 @@ CODED is an algorithm developed to monitor for low-magnitude forest disturbances
 
 ## Repository
 
-An updated repository with Javascript code to run the algorithm can be found [here](https://code.earthengine.google.com/?accept_repo=users/bullocke/cdd). An old and non-maintained version using the Python API can be found in the '/python' directory. 
+An updated repository with Javascript code to run the algorithm can be found [here](https://code.earthengine.google.com/?accept_repo=users/bullocke/coded). An old and non-maintained version using the Python API can be found in the '/python' directory. 
 
 ## Pre-processing
 
