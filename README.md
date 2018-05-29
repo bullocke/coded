@@ -4,7 +4,7 @@ CODED is an algorithm developed to monitor for low-magnitude forest disturbances
 
 ## Repository
 
-An updated repository with Javascript code to run the algorithm can be found [here](https://code.earthengine.google.com/?accept_repo=users/bullocke/coded). An old and non-maintained version using the Python API can be found in the '/python' directory. 
+An updated repository with Javascript code to run the algorithm can be found [here](https://code.earthengine.google.com/?accept_repo=users/bullocke/coded). Intructions for running the algorithm can be found in the [Javascript folder](https://github.com/bullocke/coded/blob/master/javascript/instructions.MD). An old and non-maintained version using the Python API can be found in the [python folder](https://github.com/bullocke/coded/tree/master/python). 
 
 ## Pre-processing
 
@@ -46,8 +46,3 @@ To see the difference in forest characterization with canopy cover, see the diff
 The change detection is performed by using the regression coefficients to predict future NDFI observations. In this way the algorithm is being performed online, meaning that change is monitored for sequentially in time. If new NDFI observations deviate beyond a change threshold for 5 consecutive observations, a disturbance is detected. The change threshold is effectively a control on the maximum allowable residual in a 'stable' time series.  
 
 ![alt text](https://raw.githubusercontent.com/bullocke/ge-cdd/master/images/flowchart_March2018.png)
-
-The algorithm is run continuously through time. In the following example you can see a pixel location that undergoes a disturbance due to a small logging event. The disturbance does not result in a change in landcover and is therefore degradation. Later, a higher-magnitude disturbance results in a conversion to pasture land. The second disturbance is therefore labeled as deforestation. 
-
-![alt text](https://raw.githubusercontent.com/bullocke/ge-cdd/master/images/ts_images.jpg)
-
