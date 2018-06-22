@@ -21,6 +21,8 @@ Training data must be a single FeatureCollection containing points with a unique
 | minRMSE | minimum RMSE for creating the change score | .015 |
 | trainStart | beginning of training period | 1992 |
 | trainEnd | end of training period | 1996 |
+| trainDataStart | beginning of time period associated with training data | 1992 |
+| trainDataEnd | end of time period associated with training data | 1996 |
 | monitorEnd | end of monitoring period | 2018 |
 | iteration | the iteration of the change detection | 1 |
 | soil | soil endmember reflectance values for each band | see example | 
