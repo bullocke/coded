@@ -1,6 +1,6 @@
 # Continuous Degredation Detection (CODED)
 
-CODED is an algorithm developed to monitor for low-magnitude forest disturbances using Landsat data. The algorithm is based upon previous developments in continuous land cover monitoring [(Zhu and Woodcock, 2014)](http://www.sciencedirect.com/science/article/pii/S0034425714000248) and tropical degradation monitoring using spectral unmixing models [(Souza et al., 2013)](http://www.mdpi.com/2072-4292/5/11/5493/html) and is built upon the [Google Earth Engine](https://earthengine.google.com/) processing and data storage system. 
+CODED is an algorithm developed to monitor for low-magnitude forest disturbances using Landsat data. The algorithm is based upon previous developments in continuous land cover monitoring [(Zhu and Woodcock, 2014)](http://www.sciencedirect.com/science/article/pii/S0034425714000248) and tropical degradation monitoring using spectral unmixing models [(Souza et al., 2013)](http://www.mdpi.com/2072-4292/5/11/5493/html) and is built upon the [Google Earth Engine](https://earthengine.google.com/) processing and data storage system. CODED is designed to create a stratification for sample-based estimation of degraded forests. 
 
 ## Repository
 
@@ -46,3 +46,9 @@ To see the difference in forest characterization with canopy cover, see the diff
 The change detection is performed by using the regression coefficients to predict future NDFI observations. In this way the algorithm is being performed online, meaning that change is monitored for sequentially in time. If new NDFI observations deviate beyond a change threshold for 5 consecutive observations, a disturbance is detected. The change threshold is effectively a control on the maximum allowable residual in a 'stable' time series.  
 
 ![alt text](https://raw.githubusercontent.com/bullocke/ge-cdd/master/images/flowchart_March2018.png)
+
+## Stratification and estimation
+
+All classification performed using remote sensing data will contain errors. This is especially true for difficult-to-map classes such as forest degradation. As a result, areas calculated through "pixel counting" of the map will be incorrect due to map bias. Proper estimation of areas can instead be obtained by applying a statistical estimator to a sample derived from a stratification of the map. The CODED algorithm should not be seen as a way to obtain perfect maps of degradation and deforestation. Instead, it is useful for creating a stratification to derive samples that can be used to calculate unbiased area estimates<sup>1</sup>. 
+
+1. Olofsson P, et al. (2014). Good practices for estimating area and assessing accuracy of land change. *Remote Sensing of Environment*, 148, 42-57. 

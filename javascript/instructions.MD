@@ -31,6 +31,7 @@ Training data must be a single FeatureCollection containing points with a unique
 | shade | shade endmember reflectance values for each band | see example |  
 | cloud | cloud endmember reflectance values for each band | see example |  
 | forestLabel | label of forest in the training data | 1 |
+| outBands | output bands to save | see example |
 
 #### Region
 
@@ -49,11 +50,11 @@ The output of the change detection is an image with various information. For eve
 | changeDate | date of change in years since 1970
 | changeMag | change magnitude defined as the average change score during the change period |
 | numObs | number of observations during monitoring period before change |
-| regrowthSlope | slope of NDFI immedietely following the change |
 | postDistClass | post-disturbance landcover class according to 'label' in training data |
 | difNDFI | NDFI magnitude after disturbance compared to before expressed as proportion * 100 | 
 | firstRegrowth | first year after a disturbance classified as forest |
 | forestTraining | value of 1 if the location was classified as forest during training period |
 | cusumStat | CUSUM test statistic for omission test |
 | cusumDate | date of maximum CUSUM test statistic | 
-| TrainForestProb | RF's forest classification probability during training period |
+| TrainForestProb | RF's forest classification probability during training period
+| postCuFProb | Forest probability after CUSUM detected change |
