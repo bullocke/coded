@@ -1,4 +1,4 @@
-## Instructions for running the Continuous Degradation Detection (CODED) algorithm on the Google Earth Engine (GEE). Version 2.0 for the GEE Javascript API. 
+## Instructions for running the Continuous Degradation Detection (CODED) algorithm on the Google Earth Engine (GEE). Version 0.1 for the GEE Javascript API. 
 
 ### Change Detection
 
