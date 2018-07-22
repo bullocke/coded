@@ -6,8 +6,6 @@ Parameters are defined using a dictionary.
 
 | Parameter | Description | Example |
 | --- | --- | --- |
-| cloud_score | minimum threshold to remove clouds based on ee.simpleCloudScore | 80 |
-| cfThreshold | minimum threshold to remove clouds based on cloud fraction | .05 |
 | consec | consecutive observations beyond change threshold to trigger a change | 3 |
 | thresh | change threshold defined as an observation's residual normalized by the training models RMSE | 5 |
 | trainLength | number of years in training period | 3 |
@@ -21,8 +19,10 @@ Parameters are defined using a dictionary.
 | npv | non-photosynthetic vegetation endmember reflectance values for each band | see example |  
 | shade | shade endmember reflectance values for each band | see example |  
 | cloud | cloud endmember reflectance values for each band | see example |  
+| cfThreshold | minimum threshold to remove clouds based on cloud fraction | .05 |
 | forestLabel | label of forest in the training data | 1 |
-
+| minYears | minimum years between disturbances | 3 |
+| numChanges | maximum number of changes to keep upon export | 3 |
 
 ### Change Detection
 
@@ -33,7 +33,7 @@ Training data should be a feature collection with each class containing a unique
 First, load the CODED module:
 
 ```javascript
-var cddUtils = require('users/bullocke/coded:sandbox/change_detection_map')
+var cddUtils = require('users/bullocke/coded:v0.2/changeDetection')
 ```
 
 Define the study area, with 'region' being an import or path to a feature. 
@@ -47,8 +47,6 @@ Define the sample name and parameters:
 var sampleName = ee.FeatureCollection('users/bullockebu/amazon/samples/sample1')
 
 var params = ee.Dictionary({
-     'cloud_score': 80,
-     'cfThreshold': .05,
      'consec': 3,
      'thresh': 3,
      'start': 1990,
@@ -61,6 +59,7 @@ var params = ee.Dictionary({
      'npv': [1400, 1700, 2200, 3000, 5500, 3000],
      'shade': [0, 0, 0, 0, 0, 0],
      'cloud': [9000, 9600, 8000, 7800, 7200, 6500],
+     'cfThreshold': .05,
      'forestLabel': 1,
      'minYears': 3
       })
@@ -108,21 +107,37 @@ var makeImage = function(arrayImage, column, bandPrefix, start, end) {
                     .arrayFlatten([bandList])
 }
 
-var column = 0 // Change flag
-var bandPrefix = 'distFlag_'
-var start = params.get('start')
-var end = params.get('end')
+var column = 0 // change flag
+var bandPrefix = 'distFlag_' // band prefix
+var start = params.get('start') // first year of study period
+var end = params.get('end') // last year of study period
 
 var distFlagImage = makeImage(results, column, bandPrefix, start, end)
 ```
 
-The results can then be submitted as a task
+If you create images of all the outputs the images will contain a lot of bands - likely not all of them are necessary. The dataUtils file contains a function to reduce the bands to 4 times the number of changes specified in the parameter dictionary. The output bands are the date of first change, magnitude of first change, the land cover after the first change, the difference in NDFI from before and after the change, the date of second change, and so on. In the following example the CODED output array is turned into 5 images, and then reduced to a smaller image while keeping all the forest flags and attaching the parameter dictionary to the image attributes.
+
+```javascript
+var disturbances = dataUtils.makeImage(results, 0, 'dist_', params.get('start'), params.get('end'))
+var magnitude = dataUtils.makeImage(results, 1, 'mag_', params.get('start'), params.get('end'))
+var postChange = dataUtils.makeImage(results, 2, 'post_', params.get('start'), params.get('end'))
+var difference = dataUtils.makeImage(results, 3, 'dif_', params.get('start'), params.get('end'))
+var forestFlag = dataUtils.makeImage(results, 4, 'forest_', params.get('start'), params.get('end'))
+
+var disturbanceBands = disturbances.addBands([magnitude, postChange, difference])
+
+var saveOutput = ee.Image(dataUtils.reduceBands(ee.Image(disturbanceBands), params)
+                           .setMulti(params))
+                           .addBands(forestFlag) 
+```
+
+The results can then be submitted as a task:
 
 ```javascript
 Export.image.toAsset({
-  image: distFlagImage,
-  description: 'distFlag',
-  assetId: 'distFlag',
+  image: saveOutput,
+  description: 'imageDescription',
+  assetId: 'path/imageDescription',
   maxPixels: 1000000000000,
   scale: 30,
   region: saveRegion.geometry(),
