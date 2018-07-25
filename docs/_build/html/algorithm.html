@@ -1,0 +1,276 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Algorithm Description &mdash; coded 0.2 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="next" title="Training Data" href="training_data.html" />
+    <link rel="prev" title="The Google Earth Engine" href="earth_engine.html" /> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> coded
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.2
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="background.html">Background and Motivation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="definitions.html">Definitions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="earth_engine.html">The Google Earth Engine</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Algorithm Description</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#pre-processing">Pre-processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#forest-classification-and-characterization">Forest classification and characterization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#change-detection">Change detection</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="training_data.html">Training Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="module_parameters.html">Parameters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="running.html">Running CODED</a></li>
+<li class="toctree-l1"><a class="reference internal" href="using_outputs.html">Outputs</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="sampling_background.html">Sampling Background</a></li>
+<li class="toctree-l1"><a class="reference internal" href="drawing_sample.html">Sampling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="interpretation.html">Interpretation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="estimation.html">Accuracy and Estimation</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">coded</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>Algorithm Description</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/algorithm.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="algorithm-description">
+<h1>Algorithm Description<a class="headerlink" href="#algorithm-description" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="pre-processing">
+<h2>Pre-processing<a class="headerlink" href="#pre-processing" title="Permalink to this headline">¶</a></h2>
+<p>All available Landsat data is used a converted to surface reflectance using the standard LEDAPS surface reflectance product. The data is first filtered for clouds using <a class="reference external" href="https://github.com/USGS-EROS/espa-cloud-masking/tree/master/cfmask">CFMask</a>:</p>
+<p>The data are then converted through linear spectral unmixing to represent fractions of spectral endmembers developed in <a class="reference external" href="http://www.sciencedirect.com/science/article/pii/S0034425705002385">Souza et al., 2005</a>, in addition to a self-developed cloud endmember. The 5 endmembers are:</p>
+<blockquote>
+<div><ul class="simple">
+<li>Green Vegetation</li>
+<li>Non-Photosynthetic Vegetation</li>
+<li>Shade</li>
+<li>Soil</li>
+<li>Cloud</li>
+</ul>
+</div></blockquote>
+<p>The endmembers are transformed according to the methodology in Souza et al (2005) in to the Normalized Fraction Degradation Index (NDFI). NDFI is generally designed to highlight areas of degraded or cleared forests. NDFI was originally designed for forest monitoring in the Amazon.</p>
+</div>
+<div class="section" id="forest-classification-and-characterization">
+<h2>Forest classification and characterization<a class="headerlink" href="#forest-classification-and-characterization" title="Permalink to this headline">¶</a></h2>
+<p>To find degraded or damaged forests, the original state of the forest must first be characterized. Generally, an NDFI value near or at 1 is indication of a forested landscape. However, the magnitude of NDFI will depend on the density of the forest. A training period is used to define the &#8216;general&#8217; state of the forest. To account for clouds, sensor noise, and other factors that cause image-to-image variability, a regression model is fit for every pixel for all the observations in the training period. The regression model is made up of the following components:</p>
+<blockquote>
+<div><ul class="simple">
+<li>A constant term, representing overall magnitude</li>
+<li>A sine and cosine term, representing seasonal, or intra-annual variability</li>
+<li>A noise term, summarized in the algorithm as the root-mean-squared-error</li>
+</ul>
+</div></blockquote>
+<p>These regression components are used to differentiate a forest from other land covers. The following chart shows how the land covers differ based on regression RMSE and magnitude based on 1250 training locations across the Amazon basin:</p>
+<img alt="https://raw.githubusercontent.com/bullocke/ge-cdd/master/images/NDFI_mag_rmse_training_4.jpg" src="https://raw.githubusercontent.com/bullocke/ge-cdd/master/images/NDFI_mag_rmse_training_4.jpg" />
+<p>An important step in this process is not just forest classification, but forest characterization. By calculating the training NDFI regression magnitude, change in NDFI can then be calculated relative to original condition. In this manner, degradation is defined as its relation to original state, not just the NDFI at the current time. A good example of this distinction is in forested cerrado, which exists naturally in a state of non-continuous canopy cover. The cerrado will naturally have a lower NDFI than a closed-canopy forest, but that does not mean it is degraded. This difference alludes to the difficulty in classifying a degraded forest based on a single image alone.</p>
+<p>To see the difference in forest characterization with canopy cover, see the difference in NDFI between a dense congruent canopy in Rondônia (top), and a thinner forested cerrado in Mato Groso (bottom, images courtesy Google Earth):</p>
+<img alt="https://raw.githubusercontent.com/bullocke/ge-cdd/master/images/thick_and_thin_exs.jpg" src="https://raw.githubusercontent.com/bullocke/ge-cdd/master/images/thick_and_thin_exs.jpg" />
+</div>
+<div class="section" id="change-detection">
+<h2>Change detection<a class="headerlink" href="#change-detection" title="Permalink to this headline">¶</a></h2>
+<p>The change detection is performed by using the regression coefficients to predict future NDFI observations. In this way the algorithm is being performed online, meaning that change is monitored for sequentially in time. If new NDFI observations deviate beyond a change threshold for 5 consecutive observations, a disturbance is detected. The change threshold is effectively a control on the maximum allowable residual in a &#8216;stable&#8217; time series.</p>
+<img alt="https://raw.githubusercontent.com/bullocke/ge-cdd/master/images/flowchart_March2018.png" src="https://raw.githubusercontent.com/bullocke/ge-cdd/master/images/flowchart_March2018.png" />
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="training_data.html" class="btn btn-neutral float-right" title="Training Data" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="earth_engine.html" class="btn btn-neutral" title="The Google Earth Engine" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, Eric Bullock.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.2',
+            LANGUAGE:'',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: ''
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  <script type="text/javascript" src="_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
