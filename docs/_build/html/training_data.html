@@ -1,8 +1,8 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="" > <!--<![endif]-->
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
 <head>
   <meta charset="utf-8">
   
@@ -26,8 +26,10 @@
 
   <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Parameters" href="module_parameters.html" />
-    <link rel="prev" title="The Google Earth Engine" href="earth_engine.html" /> 
+    <link rel="prev" title="Algorithm Description" href="algorithm.html" /> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -81,23 +83,21 @@
             
             
               <ul>
-<li class="toctree-l1"><a class="reference internal" href="background.html">Background</a></li>
+<li class="toctree-l1"><a class="reference internal" href="background.html">Background and Motivation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="definitions.html">Definitions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 </ul>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="earth_engine.html">The Google Earth Engine</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="">Training Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="algorithm.html">Algorithm Description</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Training Data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_parameters.html">Parameters</a></li>
 <li class="toctree-l1"><a class="reference internal" href="running.html">Running CODED</a></li>
-<li class="toctree-l1"><a class="reference internal" href="using_outputs.html">Outputs</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="sampling_background.html">Sampling Background</a></li>
 <li class="toctree-l1"><a class="reference internal" href="drawing_sample.html">Sampling</a></li>
 <li class="toctree-l1"><a class="reference internal" href="interpretation.html">Interpretation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="estimation.html">Accuracy and Estimation</a></li>
-<li class="toctree-l1"><a class="reference external" href="https://sphinx-rtd-theme.readthedocs.io/en/latest/">Theme</a></li>
 </ul>
 
             
@@ -149,7 +149,7 @@
       <li class="wy-breadcrumbs-aside">
         
             
-            <a href="_sources/training_data.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/training_data.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -164,7 +164,36 @@
             
   <div class="section" id="training-data">
 <h1>Training Data<a class="headerlink" href="#training-data" title="Permalink to this headline">¶</a></h1>
-<p>Generating training data.</p>
+<p>Training data can be created in a variety of ways, but the algorithm expects a feature collection of points with unique land cover labels identified with a ‘label’ attribute. For example, forests can have a ‘label’ attribute of 1, agriculture as 2, and so on. One simple, although possibly problematic, method to develop training data is to simply use the data on the Google Earth Engine and creating a feature collection for each land cover.</p>
+<ol class="arabic simple">
+<li>While in the Earth Engine, navigate to Geometry Imports -&gt; + new layer.</li>
+<li>In the layer configuration, given the layer a name, set the type to FeatureCollection, and give it a ‘label’ property with a unique integer identifier.</li>
+</ol>
+<img alt="_images/trainingConfig.jpg" src="_images/trainingConfig.jpg" />
+<ol class="arabic simple" start="3">
+<li>Using the data available on the Earth Engine, such as Landsat, Sentinel-2, and the high resolution background imagery, add training points that correspond to a certain time period. For example, all of the training points could correspond to the land cover from 2012-2014. See the official <a class="reference external" href="https://developers.google.com/earth-engine/tutorial_api_04">Earth Engine tutorials</a> for information on finding and displaying Image Collections.</li>
+</ol>
+<img alt="_images/training.png" src="_images/training.png" />
+<ol class="arabic simple" start="4">
+<li>Create training data for all land covers in the study region. The land covers are necessary to differentiate between forest conversion and a disturbance that does not result in a change in land cover.</li>
+<li>The training features can be combined with the ‘merge’ method. For example, assuming ‘forest’, ‘pasture’, ‘agriculture’, ‘urban’, and ‘water’ all represent Feature Collections:</li>
+</ol>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="kd">var</span> <span class="nx">training</span> <span class="o">=</span> <span class="nx">forest</span><span class="p">.</span><span class="nx">merge</span><span class="p">(</span><span class="nx">pasture</span><span class="p">)</span>
+                     <span class="p">.</span><span class="nx">merge</span><span class="p">(</span><span class="nx">agriculture</span><span class="p">)</span>
+                     <span class="p">.</span><span class="nx">merge</span><span class="p">(</span><span class="nx">urban</span><span class="p">)</span>
+                     <span class="p">.</span><span class="nx">merge</span><span class="p">(</span><span class="nx">water</span><span class="p">)</span>
+</pre></div>
+</div>
+<ol class="arabic simple" start="6">
+<li>The outputs should then be saved as an Earth Engine asset.</li>
+</ol>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="nx">Export</span><span class="p">.</span><span class="nx">table</span><span class="p">.</span><span class="nx">toAsset</span><span class="p">({</span>
+   <span class="nx">collection</span><span class="o">:</span> <span class="nx">training</span><span class="p">,</span>
+   <span class="nx">description</span><span class="o">:</span> <span class="s1">&#39;sample&#39;</span><span class="p">,</span>
+   <span class="nx">assetId</span><span class="o">:</span> <span class="s1">&#39;sample&#39;</span>
+<span class="p">})</span>
+</pre></div>
+</div>
 </div>
 
 
@@ -178,7 +207,7 @@
         <a href="module_parameters.html" class="btn btn-neutral float-right" title="Parameters" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="earth_engine.html" class="btn btn-neutral" title="The Google Earth Engine" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="algorithm.html" class="btn btn-neutral" title="Algorithm Description" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -210,17 +239,17 @@
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'./',
             VERSION:'0.2',
-            LANGUAGE:'',
+            LANGUAGE:'None',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: ''
+            SOURCELINK_SUFFIX: '.txt'
         };
     </script>
       <script type="text/javascript" src="_static/jquery.js"></script>
       <script type="text/javascript" src="_static/underscore.js"></script>
       <script type="text/javascript" src="_static/doctools.js"></script>
-      <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 
   
 

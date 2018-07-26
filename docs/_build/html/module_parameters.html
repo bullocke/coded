@@ -1,8 +1,8 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="" > <!--<![endif]-->
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
 <head>
   <meta charset="utf-8">
   
@@ -26,6 +26,8 @@
 
   <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Running CODED" href="running.html" />
     <link rel="prev" title="Training Data" href="training_data.html" /> 
 
@@ -86,10 +88,9 @@
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 </ul>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="earth_engine.html">The Google Earth Engine</a></li>
 <li class="toctree-l1"><a class="reference internal" href="algorithm.html">Algorithm Description</a></li>
 <li class="toctree-l1"><a class="reference internal" href="training_data.html">Training Data</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="">Parameters</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Parameters</a></li>
 <li class="toctree-l1"><a class="reference internal" href="running.html">Running CODED</a></li>
 <li class="toctree-l1"><a class="reference internal" href="using_outputs.html">Outputs</a></li>
 </ul>
@@ -98,7 +99,6 @@
 <li class="toctree-l1"><a class="reference internal" href="drawing_sample.html">Sampling</a></li>
 <li class="toctree-l1"><a class="reference internal" href="interpretation.html">Interpretation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="estimation.html">Accuracy and Estimation</a></li>
-<li class="toctree-l1"><a class="reference external" href="https://sphinx-rtd-theme.readthedocs.io/en/latest/">Theme</a></li>
 </ul>
 
             
@@ -150,7 +150,7 @@
       <li class="wy-breadcrumbs-aside">
         
             
-            <a href="_sources/module_parameters.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/module_parameters.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -166,40 +166,85 @@
   <div class="section" id="parameters">
 <h1>Parameters<a class="headerlink" href="#parameters" title="Permalink to this headline">¶</a></h1>
 <p>Algorithm parameters.</p>
-<dl class="docutils">
-<dt>thresh</dt>
-<dd>change threshold defined as an observation&#8217;s residual normalized by          the training models RMSE</dd>
-<dt>consec</dt>
-<dd>consecutive observations beyond change threshold to trigger a change</dd>
-<dt>trainLength</dt>
-<dd>number of years in training period</dd>
-<dt>minYears</dt>
-<dd>minimum years between disturbances</dd>
-<dt>start</dt>
-<dd>beginning of study period</dd>
-<dt>end</dt>
-<dd>end of study period</dd>
-<dt>trainDataStart</dt>
-<dd>beginning of time period associated with training data</dd>
-<dt>trainDataEnd</dt>
-<dd>end of time period associated with training data</dd>
-<dt>soil</dt>
-<dd>soil endmember reflectance values for each band</dd>
-<dt>gv</dt>
-<dd>green vegetation endmember reflectance values for each band</dd>
-<dt>npv</dt>
-<dd>non-photosynthetic vegetation endmember reflectance values for each band</dd>
-<dt>shade</dt>
-<dd>shade endmember reflectance values for each band</dd>
-<dt>cloud</dt>
-<dd>cloud endmember reflectance values for each band</dd>
-<dt>cfThreshold</dt>
-<dd>minimum threshold to remove clouds based on cloud fraction</dd>
-<dt>forestLabel</dt>
-<dd>label of forest in the training data</dd>
-<dt>numChanges</dt>
-<dd>maximum number of changes to keep upon export</dd>
-</dl>
+<table border="1" class="docutils">
+<colgroup>
+<col width="16%" />
+<col width="7%" />
+<col width="77%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Type</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>thresh</td>
+<td>int</td>
+<td>change threshold defined as a residual normalized by the training model RMSE</td>
+</tr>
+<tr class="row-odd"><td>consec</td>
+<td>int</td>
+<td>consecutive observations beyond change threshold to trigger a change</td>
+</tr>
+<tr class="row-even"><td>trainlength</td>
+<td>int</td>
+<td>number of years in training period</td>
+</tr>
+<tr class="row-odd"><td>minYears</td>
+<td>int</td>
+<td>minimum years between disturbances</td>
+</tr>
+<tr class="row-even"><td>start</td>
+<td>int</td>
+<td>beginning year of study period</td>
+</tr>
+<tr class="row-odd"><td>end</td>
+<td>int</td>
+<td>ending year of study period</td>
+</tr>
+<tr class="row-even"><td>trainDataStart</td>
+<td>int</td>
+<td>beginning year of time period associated with training data</td>
+</tr>
+<tr class="row-odd"><td>trainDataEnd</td>
+<td>int</td>
+<td>ending year of time period associated with training data</td>
+</tr>
+<tr class="row-even"><td>soil</td>
+<td>list</td>
+<td>soil endmember reflectance value for each band</td>
+</tr>
+<tr class="row-odd"><td>gv</td>
+<td>list</td>
+<td>green vegetation endmember reflectance value for each band</td>
+</tr>
+<tr class="row-even"><td>npv</td>
+<td>list</td>
+<td>non-photosynthetic vegetation endmember reflectance value for each band</td>
+</tr>
+<tr class="row-odd"><td>shade</td>
+<td>list</td>
+<td>shade endmember reflectance value for each band</td>
+</tr>
+<tr class="row-even"><td>cloud</td>
+<td>list</td>
+<td>cloud endmember reflectance value for each band</td>
+</tr>
+<tr class="row-odd"><td>cfThreshold</td>
+<td>float</td>
+<td>minimum threshold to remove clouds based on cloud fraction</td>
+</tr>
+<tr class="row-even"><td>forestLabel</td>
+<td>int</td>
+<td>label of forest in training data</td>
+</tr>
+<tr class="row-odd"><td>numChanges</td>
+<td>int</td>
+<td>maximum number of changes to keep when exporting</td>
+</tr>
+</tbody>
+</table>
 </div>
 
 
@@ -245,17 +290,17 @@
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'./',
             VERSION:'0.2',
-            LANGUAGE:'',
+            LANGUAGE:'None',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: ''
+            SOURCELINK_SUFFIX: '.txt'
         };
     </script>
       <script type="text/javascript" src="_static/jquery.js"></script>
       <script type="text/javascript" src="_static/underscore.js"></script>
       <script type="text/javascript" src="_static/doctools.js"></script>
-      <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 
   
 

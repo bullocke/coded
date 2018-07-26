@@ -1,8 +1,8 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="" > <!--<![endif]-->
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
 <head>
   <meta charset="utf-8">
   
@@ -26,6 +26,8 @@
 
   <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Outputs" href="using_outputs.html" />
     <link rel="prev" title="Parameters" href="module_parameters.html" /> 
 
@@ -81,15 +83,16 @@
             
             
               <ul>
-<li class="toctree-l1"><a class="reference internal" href="background.html">Background</a></li>
+<li class="toctree-l1"><a class="reference internal" href="background.html">Background and Motivation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="definitions.html">Definitions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 </ul>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="earth_engine.html">The Google Earth Engine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="algorithm.html">Algorithm Description</a></li>
 <li class="toctree-l1"><a class="reference internal" href="training_data.html">Training Data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_parameters.html">Parameters</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="">Running CODED</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Running CODED</a></li>
 <li class="toctree-l1"><a class="reference internal" href="using_outputs.html">Outputs</a></li>
 </ul>
 <ul>
@@ -97,7 +100,6 @@
 <li class="toctree-l1"><a class="reference internal" href="drawing_sample.html">Sampling</a></li>
 <li class="toctree-l1"><a class="reference internal" href="interpretation.html">Interpretation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="estimation.html">Accuracy and Estimation</a></li>
-<li class="toctree-l1"><a class="reference external" href="https://sphinx-rtd-theme.readthedocs.io/en/latest/">Theme</a></li>
 </ul>
 
             
@@ -149,7 +151,7 @@
       <li class="wy-breadcrumbs-aside">
         
             
-            <a href="_sources/running.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/running.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -165,6 +167,129 @@
   <div class="section" id="running-coded">
 <h1>Running CODED<a class="headerlink" href="#running-coded" title="Permalink to this headline">¶</a></h1>
 <p>Instructions on running CODED.</p>
+<p>First, load the CODED module:</p>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="kd">var</span> <span class="nx">cddUtils</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">&#39;users/bullocke/coded:v0.2/changeDetection&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Define the study area, with ‘region’ being an import or path to a feature.</p>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="kd">var</span> <span class="nx">saveRegion</span> <span class="o">=</span> <span class="nx">ee</span><span class="p">.</span><span class="nx">FeatureCollection</span><span class="p">(</span><span class="nx">region</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Define the sample name and parameters:</p>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="kd">var</span> <span class="nx">sampleName</span> <span class="o">=</span> <span class="nx">ee</span><span class="p">.</span><span class="nx">FeatureCollection</span><span class="p">(</span><span class="s1">&#39;users/bullockebu/amazon/samples/sample1&#39;</span><span class="p">)</span>
+
+<span class="kd">var</span> <span class="nx">params</span> <span class="o">=</span> <span class="nx">ee</span><span class="p">.</span><span class="nx">Dictionary</span><span class="p">({</span>
+               <span class="s1">&#39;consec&#39;</span><span class="o">:</span> <span class="mi">3</span><span class="p">,</span>
+               <span class="s1">&#39;thresh&#39;</span><span class="o">:</span> <span class="mi">3</span><span class="p">,</span>
+               <span class="s1">&#39;start&#39;</span><span class="o">:</span> <span class="mi">1990</span><span class="p">,</span>
+               <span class="s1">&#39;end&#39;</span><span class="o">:</span> <span class="mi">2018</span><span class="p">,</span>
+               <span class="s1">&#39;trainDataEnd&#39;</span><span class="o">:</span> <span class="mi">2016</span><span class="p">,</span>
+               <span class="s1">&#39;trainDataStart&#39;</span><span class="o">:</span> <span class="mi">2013</span><span class="p">,</span>
+               <span class="s1">&#39;trainLength&#39;</span><span class="o">:</span> <span class="mi">3</span><span class="p">,</span>
+               <span class="s1">&#39;soil&#39;</span><span class="o">:</span> <span class="p">[</span><span class="mi">2000</span><span class="p">,</span> <span class="mi">3000</span><span class="p">,</span> <span class="mi">3400</span><span class="p">,</span> <span class="mi">5800</span><span class="p">,</span> <span class="mi">6000</span><span class="p">,</span> <span class="mi">5800</span><span class="p">],</span>
+               <span class="s1">&#39;gv&#39;</span><span class="o">:</span> <span class="p">[</span><span class="mi">500</span><span class="p">,</span> <span class="mi">900</span><span class="p">,</span> <span class="mi">400</span><span class="p">,</span> <span class="mi">6100</span><span class="p">,</span> <span class="mi">3000</span><span class="p">,</span> <span class="mi">1000</span><span class="p">],</span>
+               <span class="s1">&#39;npv&#39;</span><span class="o">:</span> <span class="p">[</span><span class="mi">1400</span><span class="p">,</span> <span class="mi">1700</span><span class="p">,</span> <span class="mi">2200</span><span class="p">,</span> <span class="mi">3000</span><span class="p">,</span> <span class="mi">5500</span><span class="p">,</span> <span class="mi">3000</span><span class="p">],</span>
+               <span class="s1">&#39;shade&#39;</span><span class="o">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+               <span class="s1">&#39;cloud&#39;</span><span class="o">:</span> <span class="p">[</span><span class="mi">9000</span><span class="p">,</span> <span class="mi">9600</span><span class="p">,</span> <span class="mi">8000</span><span class="p">,</span> <span class="mi">7800</span><span class="p">,</span> <span class="mi">7200</span><span class="p">,</span> <span class="mi">6500</span><span class="p">],</span>
+               <span class="s1">&#39;cfThreshold&#39;</span><span class="o">:</span> <span class="mf">.05</span><span class="p">,</span>
+               <span class="s1">&#39;forestLabel&#39;</span><span class="o">:</span> <span class="mi">1</span><span class="p">,</span>
+               <span class="s1">&#39;minYears&#39;</span><span class="o">:</span> <span class="mi">3</span>
+             <span class="p">})</span>
+</pre></div>
+</div>
+<p>Call the main function of CODED to retrieve the results:</p>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="kd">var</span> <span class="nx">results</span> <span class="o">=</span> <span class="nx">cddUtils</span><span class="p">.</span><span class="nx">submitCODED</span><span class="p">(</span><span class="nx">saveRegion</span><span class="p">,</span> <span class="nx">params</span><span class="p">,</span> <span class="nx">trainingData</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The output of the change detection is an [array image](<a class="reference external" href="https://developers.google.com/earth-engine/arrays_array_images">https://developers.google.com/earth-engine/arrays_array_images</a>). At every pixel location there is an array matrix, with a row for every year in the study period and the columns corresponding to the a change flag (1 = change, 0 = no change), change magnitude, post-change land cover, NDFI difference band, and a forest flag (1 = forest in training period).</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="7%" />
+<col width="7%" />
+<col width="85%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Column</th>
+<th class="head">Range</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>1</td>
+<td>0-1</td>
+<td>Change flag with 1 indicating change</td>
+</tr>
+<tr class="row-odd"><td>2</td>
+<td>0-255</td>
+<td>Change magnitude with higher values representing higher magnitude</td>
+</tr>
+<tr class="row-even"><td>3</td>
+<td>1-#C</td>
+<td>Post-change land cover corrresponding to label in training data (1 - # of classes)</td>
+</tr>
+<tr class="row-odd"><td>4</td>
+<td>0-255</td>
+<td>Difference in NDFI expressed as percent NDFI magnitude after disturbance compared to before</td>
+</tr>
+<tr class="row-even"><td>5</td>
+<td>0-1</td>
+<td>Forest flag with 1 representing forest in training period</td>
+</tr>
+</tbody>
+</table>
+<p>The data array that CODED returns can not be saved as an output or asset. The array image needs to be projected as a saveable 3-D image (x, y, and band dimensions).</p>
+<p>First, it helps to define a function to create band names:</p>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="kd">var</span> <span class="nx">makeBands</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">start</span><span class="p">,</span> <span class="nx">end</span><span class="p">,</span> <span class="nx">prefix</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kd">var</span> <span class="nx">bandSeq</span> <span class="o">=</span> <span class="nx">ee</span><span class="p">.</span><span class="nx">List</span><span class="p">.</span><span class="nx">sequence</span><span class="p">(</span><span class="nx">start</span><span class="p">,</span> <span class="nx">end</span><span class="p">)</span>
+  <span class="kd">var</span> <span class="nx">bandList</span> <span class="o">=</span> <span class="nx">bandSeq</span><span class="p">.</span><span class="nx">map</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">i</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="nx">ee</span><span class="p">.</span><span class="nb">String</span><span class="p">(</span><span class="nx">prefix</span><span class="p">).</span><span class="nx">cat</span><span class="p">(</span><span class="nx">ee</span><span class="p">.</span><span class="nb">String</span><span class="p">(</span><span class="nx">i</span><span class="p">).</span><span class="nx">slice</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">4</span><span class="p">))</span>
+  <span class="p">})</span>
+  <span class="k">return</span> <span class="nx">bandList</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Next, use a combination of arraySlice, arrayProject, and arrayFlatten to turn one column of the array image into a 3D image with one band for each year:</p>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="kd">var</span> <span class="nx">makeImage</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">arrayImage</span><span class="p">,</span> <span class="nx">column</span><span class="p">,</span> <span class="nx">bandPrefix</span><span class="p">,</span> <span class="nx">start</span><span class="p">,</span> <span class="nx">end</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kd">var</span> <span class="nx">bandList</span> <span class="o">=</span> <span class="nx">makeBands</span><span class="p">(</span><span class="nx">start</span><span class="p">,</span> <span class="nx">end</span><span class="p">,</span> <span class="nx">bandPrefix</span><span class="p">)</span>
+  <span class="k">return</span> <span class="nx">arrayImage</span><span class="p">.</span><span class="nx">arraySlice</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nx">ee</span><span class="p">.</span><span class="nb">Number</span><span class="p">(</span><span class="nx">column</span><span class="p">),</span> <span class="nx">ee</span><span class="p">.</span><span class="nb">Number</span><span class="p">(</span><span class="nx">column</span><span class="p">).</span><span class="nx">add</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+                    <span class="p">.</span><span class="nx">arrayProject</span><span class="p">([</span><span class="mi">0</span><span class="p">])</span>
+                    <span class="p">.</span><span class="nx">arrayFlatten</span><span class="p">([</span><span class="nx">bandList</span><span class="p">])</span>
+<span class="p">}</span>
+
+<span class="kd">var</span> <span class="nx">column</span> <span class="o">=</span> <span class="mi">0</span> <span class="c1">// change flag</span>
+<span class="kd">var</span> <span class="nx">bandPrefix</span> <span class="o">=</span> <span class="s1">&#39;distFlag_&#39;</span> <span class="c1">// band prefix</span>
+<span class="kd">var</span> <span class="nx">start</span> <span class="o">=</span> <span class="nx">params</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;start&#39;</span><span class="p">)</span> <span class="c1">// first year of study period</span>
+<span class="kd">var</span> <span class="nx">end</span> <span class="o">=</span> <span class="nx">params</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;end&#39;</span><span class="p">)</span> <span class="c1">// last year of study period</span>
+
+<span class="kd">var</span> <span class="nx">distFlagImage</span> <span class="o">=</span> <span class="nx">makeImage</span><span class="p">(</span><span class="nx">results</span><span class="p">,</span> <span class="nx">column</span><span class="p">,</span> <span class="nx">bandPrefix</span><span class="p">,</span> <span class="nx">start</span><span class="p">,</span> <span class="nx">end</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>If you create images of all the outputs the images will contain a lot of bands - likely not all of them are necessary. The dataUtils file contains a function to reduce the bands to 4 times the number of changes specified in the parameter dictionary. The output bands are the date of first change, magnitude of first change, the land cover after the first change, the difference in NDFI from before and after the change, the date of second change, and so on. In the following example the CODED output array is turned into 5 images, and then reduced to a smaller image while keeping all the forest flags and attaching the parameter dictionary to the image attributes.</p>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="kd">var</span> <span class="nx">dataUtils</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">&#39;users/bullocke/coded:v0.2/dataUtils&#39;</span><span class="p">)</span>
+
+<span class="kd">var</span> <span class="nx">disturbances</span> <span class="o">=</span> <span class="nx">dataUtils</span><span class="p">.</span><span class="nx">makeImage</span><span class="p">(</span><span class="nx">results</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;dist_&#39;</span><span class="p">,</span> <span class="nx">start</span><span class="p">,</span> <span class="nx">end</span><span class="p">)</span>
+<span class="kd">var</span> <span class="nx">magnitude</span> <span class="o">=</span> <span class="nx">dataUtils</span><span class="p">.</span><span class="nx">makeImage</span><span class="p">(</span><span class="nx">results</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;mag_&#39;</span><span class="p">,</span> <span class="nx">start</span><span class="p">,</span> <span class="nx">end</span><span class="p">)</span>
+<span class="kd">var</span> <span class="nx">postChange</span> <span class="o">=</span> <span class="nx">dataUtils</span><span class="p">.</span><span class="nx">makeImage</span><span class="p">(</span><span class="nx">results</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;post_&#39;</span><span class="p">,</span> <span class="nx">start</span><span class="p">,</span> <span class="nx">end</span><span class="p">)</span>
+<span class="kd">var</span> <span class="nx">difference</span> <span class="o">=</span> <span class="nx">dataUtils</span><span class="p">.</span><span class="nx">makeImage</span><span class="p">(</span><span class="nx">results</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="s1">&#39;dif_&#39;</span><span class="p">,</span> <span class="nx">start</span><span class="p">,</span> <span class="nx">end</span><span class="p">)</span>
+<span class="kd">var</span> <span class="nx">forestFlag</span> <span class="o">=</span> <span class="nx">dataUtils</span><span class="p">.</span><span class="nx">makeImage</span><span class="p">(</span><span class="nx">results</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="s1">&#39;forest_&#39;</span><span class="p">,</span> <span class="nx">start</span><span class="p">,</span> <span class="nx">end</span><span class="p">)</span>
+<span class="kd">var</span> <span class="nx">disturbanceBands</span> <span class="o">=</span> <span class="nx">disturbances</span><span class="p">.</span><span class="nx">addBands</span><span class="p">([</span><span class="nx">magnitude</span><span class="p">,</span> <span class="nx">postChange</span><span class="p">,</span> <span class="nx">difference</span><span class="p">])</span>
+
+<span class="kd">var</span> <span class="nx">saveOutput</span> <span class="o">=</span> <span class="nx">ee</span><span class="p">.</span><span class="nx">Image</span><span class="p">(</span><span class="nx">dataUtils</span><span class="p">.</span><span class="nx">reduceBands</span><span class="p">(</span><span class="nx">ee</span><span class="p">.</span><span class="nx">Image</span><span class="p">(</span><span class="nx">disturbanceBands</span><span class="p">),</span> <span class="nx">params</span><span class="p">)</span>
+                           <span class="p">.</span><span class="nx">setMulti</span><span class="p">(</span><span class="nx">params</span><span class="p">))</span>
+                           <span class="p">.</span><span class="nx">addBands</span><span class="p">(</span><span class="nx">forestFlag</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The results can then be submitted as a task:</p>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="nx">Export</span><span class="p">.</span><span class="nx">image</span><span class="p">.</span><span class="nx">toAsset</span><span class="p">({</span>
+  <span class="nx">image</span><span class="o">:</span> <span class="nx">saveOutput</span><span class="p">,</span>
+  <span class="nx">description</span><span class="o">:</span> <span class="s1">&#39;imageDescription&#39;</span><span class="p">,</span>
+  <span class="nx">assetId</span><span class="o">:</span> <span class="s1">&#39;path/imageDescription&#39;</span><span class="p">,</span>
+  <span class="nx">maxPixels</span><span class="o">:</span> <span class="mi">1000000000000</span><span class="p">,</span>
+  <span class="nx">scale</span><span class="o">:</span> <span class="mi">30</span><span class="p">,</span>
+  <span class="nx">region</span><span class="o">:</span> <span class="nx">saveRegion</span><span class="p">.</span><span class="nx">geometry</span><span class="p">(),</span>
+<span class="p">})</span>
+</pre></div>
+</div>
 </div>
 
 
@@ -210,17 +335,17 @@
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'./',
             VERSION:'0.2',
-            LANGUAGE:'',
+            LANGUAGE:'None',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: ''
+            SOURCELINK_SUFFIX: '.txt'
         };
     </script>
       <script type="text/javascript" src="_static/jquery.js"></script>
       <script type="text/javascript" src="_static/underscore.js"></script>
       <script type="text/javascript" src="_static/doctools.js"></script>
-      <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 
   
 

@@ -1,8 +1,8 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="" > <!--<![endif]-->
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
 <head>
   <meta charset="utf-8">
   
@@ -26,6 +26,8 @@
 
   <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Definitions" href="definitions.html" />
     <link rel="prev" title="Continuous Degradation Detection (CODED)" href="index.html" /> 
 
@@ -81,12 +83,11 @@
             
             
               <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="">Background and Motivation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Background and Motivation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="definitions.html">Definitions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 </ul>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="earth_engine.html">The Google Earth Engine</a></li>
 <li class="toctree-l1"><a class="reference internal" href="algorithm.html">Algorithm Description</a></li>
 <li class="toctree-l1"><a class="reference internal" href="training_data.html">Training Data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_parameters.html">Parameters</a></li>
@@ -149,7 +150,7 @@
       <li class="wy-breadcrumbs-aside">
         
             
-            <a href="_sources/background.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/background.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -164,7 +165,9 @@
             
   <div class="section" id="background-and-motivation">
 <h1>Background and Motivation<a class="headerlink" href="#background-and-motivation" title="Permalink to this headline">¶</a></h1>
-<p>CODED is an algorithm developed to monitor for for forest conversion and degradation using Landsat data. The algorithm is based upon previous developments in continuous land cover monitoring [1] and tropical degradation monitoring using spectral unmixing models [2] and is built upon the Google Earth Engine processing and data storage system. CODED is designed to create a stratification for sample-based estimation of degraded forests.</p>
+<p>CODED is an algorithm developed to monitor for forest conversion and degradation using time series analysis of Landsat data. The algorithm is based upon previous developments in continuous land cover monitoring [1] and tropical degradation mapping using spectral unmixing models [2] and is built upon the Google Earth Engine processing and data storage system. The algorithm was originally implemented in Python but required large data storage and computing resources for processing the vast amounts of data. Therefore, CODED was ported to the Javascript language for easier use over large areas.</p>
+<p>The motivation behind the CODED project was to develop a methodology that could successfully identify low-magnitude forest disturbances in addition to differentiate between deforestation and degradation. While recent scientific and technological advances have greatly improved our ability to map high-magnitude forest clearings [3], no such methodology has proven as reliable for identifying degradation [4]. Despite this, degradation has been estimated to account for 40-212% the carbon emissions of deforestation [5-7]. Degradation events can often be small, subtle, and temporary, making them tricky to identifying with traditional approaches to change detection [8]. CODED attempts to overcome some of these limitations through sub-pixel spectral mixture analysis performed continuously through time. Timeseries analysis allows for subtle changes to be differentiated from ephemeral variations due to clouds or cloud shadows. Multi-temporal information is then used for land cover classification. The result is an approach that has proven successful at being able to differentiate disturbances that do not result in a change in land cover, or degradation, from forest conversion.</p>
+<p>While CODED is able to produce disturbance maps that can be used for a variety of purposes, the subtle and temporary nature of degradation events means that errors of omission can potentially be large. Therefore, CODED has been shown to be most successful in the past for stratifying a landscape, which can then be used to derive sample-based estimates of area of degradation.</p>
 <table class="docutils footnote" frame="void" id="id1" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
@@ -175,6 +178,42 @@
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
 <tr><td class="label">[2]</td><td>Souza Jr, C., Firestone, L., Silva, L. M., &amp; Roberts, D. (2003). Mapping forest degradation in the Eastern Amazon from SPOT 4 through spectral mixture models. Remote sensing of environment, 87(4), 494-506.</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id3" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[3]</td><td>Hansen, M.C., Potapov, P. V, Moore, R., Hancher, M., Turubanova, S. a, Tyukavina,  a, Thau, D., Stehman, S. V, Goetz, S.J., Loveland, T.R., Kommareddy,  a, Egorov,  a, Chini, L., Justice, C.O., Townshend, J.R.G., 2013. High-resolution global maps of 21st-century forest cover change. Science 342, 850–3. doi:10.1126/science.1244693</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id4" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[4]</td><td>Herold, M., Román-Cuesta, R., Mollicone, D., Hirata, Y., Van Laake, P., Asner, G.P., Souza, C., Skutsch, M., Avitabile, V., MacDicken, K., 2011b. Options for monitoring and estimating historical carbon emissions from forest degradation in the context of REDD+. Carbon Balance Manag. 6, 13. doi:10.1186/1750-0680-6-13</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id5" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[5]</td><td>Berenguer, E., Ferreira, J., Gardner, T.A., Aragão, L.E.O.C., De Camargo, P.B., Cerri, C.E., Durigan, M., De Oliveira, R.C., Vieira, I.C.G., Barlow, J., 2014. A large-scale field assessment of carbon stocks in human-modified tropical forests. Glob. Chang. Biol. 20, 3713–3726. doi:10.1111/gcb.12627</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id6" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[6]</td><td>Pearson, T.R.H., Brown, S., Murray, L., Sidman, G., 2017. Greenhouse gas emissions from tropical forest degradation: an underestimated source. Carbon Balance Manag. 12, 3. doi:10.1186/s13021-017-0072-2</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id7" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[7]</td><td>Baccini, A., Walker, W., Carvahlo, L., Farina, M., Sulla-Menashe, D., Houghton, R., 2017. Tropical forests are a net carbon source based on new measurements of gain and loss. Rev. 5962, 1–11. doi:10.1126/science.1252826</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id8" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[8]</td><td>Goetz, S.J., Baccini, A., Laporte, N.T., Johns, T., Walker, W., Kellndorfer, J., Houghton, R.A., Sun, M., 2009. Mapping and monitoring carbon stocks with satellite observations: a comparison of methods. Carbon Balance Manag. 4, 2. doi:10.1186/1750-0680-4-2</td></tr>
 </tbody>
 </table>
 </div>
@@ -222,17 +261,17 @@
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'./',
             VERSION:'0.2',
-            LANGUAGE:'',
+            LANGUAGE:'None',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: ''
+            SOURCELINK_SUFFIX: '.txt'
         };
     </script>
       <script type="text/javascript" src="_static/jquery.js"></script>
       <script type="text/javascript" src="_static/underscore.js"></script>
       <script type="text/javascript" src="_static/doctools.js"></script>
-      <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 
   
 
