@@ -1,7 +1,7 @@
 Training Data
 =============
 
-Training data can be created in a variety of ways, but the algorithm expects a feature collection of points with unique land cover labels identified with a 'label' attribute. For example, forests can have a 'label' attribute of 1, agriculture as 2, and so on. One simple, although possibly problematic, method to develop training data is to simply use the data on the Google Earth Engine and creating a feature collection for each land cover.
+Training data can be created in a variety of ways, but the algorithm expects a Feature Collection of points with unique land cover labels identified with a 'label' attribute. For example, forests can have a 'label' attribute of 1, agriculture as 2, and so on. One simple, although possibly problematic, method to develop training data is to simply use the data on the Google Earth Engine and creating a Feature Collection for each land cover.
 
 1. While in the Earth Engine, navigate to Geometry Imports -> + new layer.
 2. In the layer configuration, given the layer a name, set the type to FeatureCollection, and give it a 'label' property with a unique integer identifier.

@@ -1,7 +1,7 @@
 Parameters
 ==========
 
-Algorithm parameters.
+*Parameters from running CODED* 
 
 +----------------+-------+------------------------------------------------------------------------------+ 
 | Parameter      | Type  | Description                                                                  |

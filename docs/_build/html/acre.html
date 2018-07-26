@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Parameters &mdash; coded 0.2 documentation</title>
+  <title>Example: Acre, Brazil &mdash; coded 0.2 documentation</title>
   
 
   
@@ -28,8 +28,8 @@
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Running CODED" href="running.html" />
-    <link rel="prev" title="Training Data" href="training_data.html" /> 
+    <link rel="next" title="Sampling Background" href="sampling_background.html" />
+    <link rel="prev" title="Running CODED" href="running.html" /> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -90,9 +90,9 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="algorithm.html">Algorithm Description</a></li>
 <li class="toctree-l1"><a class="reference internal" href="training_data.html">Training Data</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Parameters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="module_parameters.html">Parameters</a></li>
 <li class="toctree-l1"><a class="reference internal" href="running.html">Running CODED</a></li>
-<li class="toctree-l1"><a class="reference internal" href="acre.html">Example: Acre, Brazil</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Example: Acre, Brazil</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="sampling_background.html">Sampling Background</a></li>
@@ -144,13 +144,13 @@
     
       <li><a href="index.html">Docs</a> &raquo;</li>
         
-      <li>Parameters</li>
+      <li>Example: Acre, Brazil</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
             
-            <a href="_sources/module_parameters.rst.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/acre.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -163,88 +163,11 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="parameters">
-<h1>Parameters<a class="headerlink" href="#parameters" title="Permalink to this headline">¶</a></h1>
-<p><em>Parameters from running CODED</em></p>
-<table border="1" class="docutils">
-<colgroup>
-<col width="16%" />
-<col width="7%" />
-<col width="77%" />
-</colgroup>
-<thead valign="bottom">
-<tr class="row-odd"><th class="head">Parameter</th>
-<th class="head">Type</th>
-<th class="head">Description</th>
-</tr>
-</thead>
-<tbody valign="top">
-<tr class="row-even"><td>thresh</td>
-<td>int</td>
-<td>change threshold defined as a residual normalized by the training model RMSE</td>
-</tr>
-<tr class="row-odd"><td>consec</td>
-<td>int</td>
-<td>consecutive observations beyond change threshold to trigger a change</td>
-</tr>
-<tr class="row-even"><td>trainlength</td>
-<td>int</td>
-<td>number of years in training period</td>
-</tr>
-<tr class="row-odd"><td>minYears</td>
-<td>int</td>
-<td>minimum years between disturbances</td>
-</tr>
-<tr class="row-even"><td>start</td>
-<td>int</td>
-<td>beginning year of study period</td>
-</tr>
-<tr class="row-odd"><td>end</td>
-<td>int</td>
-<td>ending year of study period</td>
-</tr>
-<tr class="row-even"><td>trainDataStart</td>
-<td>int</td>
-<td>beginning year of time period associated with training data</td>
-</tr>
-<tr class="row-odd"><td>trainDataEnd</td>
-<td>int</td>
-<td>ending year of time period associated with training data</td>
-</tr>
-<tr class="row-even"><td>soil</td>
-<td>list</td>
-<td>soil endmember reflectance value for each band</td>
-</tr>
-<tr class="row-odd"><td>gv</td>
-<td>list</td>
-<td>green vegetation endmember reflectance value for each band</td>
-</tr>
-<tr class="row-even"><td>npv</td>
-<td>list</td>
-<td>non-photosynthetic vegetation endmember reflectance value for each band</td>
-</tr>
-<tr class="row-odd"><td>shade</td>
-<td>list</td>
-<td>shade endmember reflectance value for each band</td>
-</tr>
-<tr class="row-even"><td>cloud</td>
-<td>list</td>
-<td>cloud endmember reflectance value for each band</td>
-</tr>
-<tr class="row-odd"><td>cfThreshold</td>
-<td>float</td>
-<td>minimum threshold to remove clouds based on cloud fraction</td>
-</tr>
-<tr class="row-even"><td>forestLabel</td>
-<td>int</td>
-<td>label of forest in training data</td>
-</tr>
-<tr class="row-odd"><td>numChanges</td>
-<td>int</td>
-<td>maximum number of changes to keep when exporting</td>
-</tr>
-</tbody>
-</table>
+  <div class="section" id="example-acre-brazil">
+<h1>Example: Acre, Brazil<a class="headerlink" href="#example-acre-brazil" title="Permalink to this headline">¶</a></h1>
+<p><em>Example CODED output in Acre, Brazil.</em></p>
+<p>In the Javascript repository there is an example the data that can be generated with CODED. The data can be visualized in the script ‘v0.2/examples/acreTS’ and the code to create the data can be found in ‘v0.2/examples/acreMap’.</p>
+<img alt="_images/acre.jpg" src="_images/acre.jpg" />
 </div>
 
 
@@ -255,10 +178,10 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="running.html" class="btn btn-neutral float-right" title="Running CODED" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="sampling_background.html" class="btn btn-neutral float-right" title="Sampling Background" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="training_data.html" class="btn btn-neutral" title="Training Data" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="running.html" class="btn btn-neutral" title="Running CODED" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

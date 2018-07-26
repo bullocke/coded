@@ -29,7 +29,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Interpretation" href="interpretation.html" />
-    <link rel="prev" title="Sampling Background" href="sampling_background.html" /> 
+    <link rel="prev" title="Example: Acre, Brazil" href="acre.html" /> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -85,18 +85,16 @@
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="background.html">Background and Motivation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="definitions.html">Definitions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Timeseries Examples</a></li>
 </ul>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="earth_engine.html">The Google Earth Engine</a></li>
 <li class="toctree-l1"><a class="reference internal" href="algorithm.html">Algorithm Description</a></li>
 <li class="toctree-l1"><a class="reference internal" href="training_data.html">Training Data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_parameters.html">Parameters</a></li>
 <li class="toctree-l1"><a class="reference internal" href="running.html">Running CODED</a></li>
-<li class="toctree-l1"><a class="reference internal" href="using_outputs.html">Outputs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="acre.html">Example: Acre, Brazil</a></li>
 </ul>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="sampling_background.html">Sampling Background</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Sampling</a></li>
 <li class="toctree-l1"><a class="reference internal" href="interpretation.html">Interpretation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="estimation.html">Accuracy and Estimation</a></li>
@@ -166,7 +164,22 @@
             
   <div class="section" id="sampling">
 <h1>Sampling<a class="headerlink" href="#sampling" title="Permalink to this headline">¶</a></h1>
-<p>Instructions on generating a sample.</p>
+<p><em>Instructions on generating a sample.</em></p>
+<p>All maps that were constructed from classification of remote sensing imagery will contain errors. These errors are inevitable and are due to many reasons including missed clouds, similarity between classes, and climate variability. Therefore, areas calculated directly from the map through “pixel counting” will be incorrect. It is instead recommended that calculation of areas, whether it be land cover or land cover change, be produced by applying an unbiased estimator to a reference sample [1]. Sample based estimation allows for the calculation of unbiased area estimates in addition to the quantification of uncertainties associated with the areas.</p>
+<p>Area estimation can be difficult when the class of interest is small relative to the population. This is generally the case when comparing the area of degraded forests to that of an entire country or region. Remote sensing data allows for the spatially explicit stratification of a landscape, with small land cover or change classes represented by unique strata. These strata can then be sampled to ensure that the small land classes are represented. This is called stratified sampling, with areas being calculated through the stratified estimator [2].</p>
+<p>This section is incomplete. Tools and guidance for sampling and estimation on the Earth Engine will be added to the <a class="reference external" href="https://github.com/bullocke/gee-assessment-tools">Earth Engine Assessment Toolbox</a> as they are developed.</p>
+<table class="docutils footnote" frame="void" id="id1" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[1]</td><td>GFOI, 2016. Integration of remote-sensing and ground-based observations for estimation of emissions and removals of greenhouse gases in forests: Methods and Guidance from the Global Forest Observations Initiative 2, 226.</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id2" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[2]</td><td>Cochran, W.G., 1977. Sampling techniques. New York John Wiley Sons.</td></tr>
+</tbody>
+</table>
 </div>
 
 
@@ -180,7 +193,7 @@
         <a href="interpretation.html" class="btn btn-neutral float-right" title="Interpretation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="sampling_background.html" class="btn btn-neutral" title="Sampling Background" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="acre.html" class="btn btn-neutral" title="Example: Acre, Brazil" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

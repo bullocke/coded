@@ -1,7 +1,7 @@
-Examples
-========
+Timeseries Examples
+===================
 
-Example location of degradation events and their corresponding Landsat time series can be found in the `javascript repository`_ in the file 'v0.2/examples/timeSeries'. The code can be run by selecting 'Run' at the top of the page (1 in figure below), then choose an example in the drop down menu (2). 
+Example of degradation events and their corresponding Landsat time series can be found in the `javascript repository`_ in the file 'v0.2/examples/timeSeries'. The code can be run by selecting 'Run' at the top of the page (1 in figure below), then choosing an example in the drop down menu (2). 
 
 .. _javascript repository: https://code.earthengine.google.com/?accept_repo=users/bullocke/coded
 .. image:: images/timeSeries1.jpg

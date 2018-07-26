@@ -28,7 +28,7 @@
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Outputs" href="using_outputs.html" />
+    <link rel="next" title="Example: Acre, Brazil" href="acre.html" />
     <link rel="prev" title="Parameters" href="module_parameters.html" /> 
 
   
@@ -85,15 +85,14 @@
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="background.html">Background and Motivation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="definitions.html">Definitions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Timeseries Examples</a></li>
 </ul>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="earth_engine.html">The Google Earth Engine</a></li>
 <li class="toctree-l1"><a class="reference internal" href="algorithm.html">Algorithm Description</a></li>
 <li class="toctree-l1"><a class="reference internal" href="training_data.html">Training Data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_parameters.html">Parameters</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Running CODED</a></li>
-<li class="toctree-l1"><a class="reference internal" href="using_outputs.html">Outputs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="acre.html">Example: Acre, Brazil</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="sampling_background.html">Sampling Background</a></li>
@@ -166,7 +165,7 @@
             
   <div class="section" id="running-coded">
 <h1>Running CODED<a class="headerlink" href="#running-coded" title="Permalink to this headline">¶</a></h1>
-<p>Instructions on running CODED.</p>
+<p><em>Instructions on running CODED.</em></p>
 <p>First, load the CODED module:</p>
 <div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="kd">var</span> <span class="nx">cddUtils</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">&#39;users/bullocke/coded:v0.2/changeDetection&#39;</span><span class="p">)</span>
 </pre></div>
@@ -201,7 +200,7 @@
 <div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="kd">var</span> <span class="nx">results</span> <span class="o">=</span> <span class="nx">cddUtils</span><span class="p">.</span><span class="nx">submitCODED</span><span class="p">(</span><span class="nx">saveRegion</span><span class="p">,</span> <span class="nx">params</span><span class="p">,</span> <span class="nx">trainingData</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>The output of the change detection is an [array image](<a class="reference external" href="https://developers.google.com/earth-engine/arrays_array_images">https://developers.google.com/earth-engine/arrays_array_images</a>). At every pixel location there is an array matrix, with a row for every year in the study period and the columns corresponding to the a change flag (1 = change, 0 = no change), change magnitude, post-change land cover, NDFI difference band, and a forest flag (1 = forest in training period).</p>
+<p>The output of the change detection is an <a class="reference external" href="https://developers.google.com/earth-engine/arrays_array_images">array image</a>. At every pixel location there is an array matrix, with a row for every year in the study period and the columns corresponding to the a change flag (1 = change, 0 = no change), change magnitude, post-change land cover, NDFI difference band, and a forest flag (1 = forest in training period).</p>
 <table border="1" class="docutils">
 <colgroup>
 <col width="7%" />
@@ -300,7 +299,7 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="using_outputs.html" class="btn btn-neutral float-right" title="Outputs" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="acre.html" class="btn btn-neutral float-right" title="Example: Acre, Brazil" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="module_parameters.html" class="btn btn-neutral" title="Parameters" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
