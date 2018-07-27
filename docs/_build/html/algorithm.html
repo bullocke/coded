@@ -89,6 +89,7 @@
 </ul>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Algorithm Description</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#data">Data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pre-processing">Pre-processing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#forest-classification-and-characterization">Forest classification and characterization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#change-detection">Change detection</a></li>
@@ -169,6 +170,11 @@
             
   <div class="section" id="algorithm-description">
 <h1>Algorithm Description<a class="headerlink" href="#algorithm-description" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="data">
+<h2>Data<a class="headerlink" href="#data" title="Permalink to this headline">¶</a></h2>
+<p>CODED was designed to use 30m Landsat data. Before running the algorithm, it is necessary that a multi-dimentional data stack be created. The data stack contains all available Landsat data or, in the Earth Engine implementation, monthly composited data.</p>
+<img alt="_images/stack1.jpeg" src="_images/stack1.jpeg" />
+</div>
 <div class="section" id="pre-processing">
 <h2>Pre-processing<a class="headerlink" href="#pre-processing" title="Permalink to this headline">¶</a></h2>
 <p>All available Landsat data is used a converted to surface reflectance using the standard LEDAPS surface reflectance product. The data is first filtered for clouds using <a class="reference external" href="https://github.com/USGS-EROS/espa-cloud-masking/tree/master/cfmask">CFMask</a>.</p>
@@ -198,7 +204,7 @@
 <p>These regression components are used to differentiate a forest from other land covers. The following chart shows how the land covers differ based on regression RMSE and magnitude based on 1250 training locations across the Amazon basin:</p>
 <img alt="https://raw.githubusercontent.com/bullocke/ge-cdd/master/images/NDFI_mag_rmse_training_4.jpg" src="https://raw.githubusercontent.com/bullocke/ge-cdd/master/images/NDFI_mag_rmse_training_4.jpg" />
 <p>An important step in this process is not just forest classification, but forest characterization. By calculating the training NDFI regression magnitude, change in NDFI can then be calculated relative to original condition. In this manner, degradation is defined as its relation to original state, not just the NDFI at the current time. A good example of this distinction is in forested cerrado, which exists naturally in a state of non-continuous canopy cover. The cerrado will naturally have a lower NDFI than a closed-canopy forest, but that does not mean it is degraded. This difference alludes to the difficulty in classifying a degraded forest based on a single image alone.</p>
-<p>To see the difference in forest characterization with canopy cover, see the difference in NDFI between a dense congruent canopy in Rondônia (top), and a thinner forested cerrado in Mato Groso (bottom, images courtesy Google Earth):</p>
+<p>To see the difference in forest characterization with canopy cover, see the difference in NDFI between a dense congruent canopy in Rondônia (top), and a thinner forested cerrado in Mato Grosso (bottom, images courtesy Google Earth):</p>
 <img alt="https://raw.githubusercontent.com/bullocke/ge-cdd/master/images/thick_and_thin_exs.jpg" src="https://raw.githubusercontent.com/bullocke/ge-cdd/master/images/thick_and_thin_exs.jpg" />
 </div>
 <div class="section" id="change-detection">

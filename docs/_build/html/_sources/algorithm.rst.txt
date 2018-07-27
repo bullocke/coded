@@ -1,5 +1,13 @@
 Algorithm Description
 =====================
+
+Data
+____
+
+CODED was designed to use 30m Landsat data. Before running the algorithm, it is necessary that a multi-dimentional data stack be created. The data stack contains all available Landsat data or, in the Earth Engine implementation, monthly composited data.
+
+.. image:: images/stack1.jpeg
+
 Pre-processing
 ______________
 
@@ -36,7 +44,7 @@ These regression components are used to differentiate a forest from other land c
 
 An important step in this process is not just forest classification, but forest characterization. By calculating the training NDFI regression magnitude, change in NDFI can then be calculated relative to original condition. In this manner, degradation is defined as its relation to original state, not just the NDFI at the current time. A good example of this distinction is in forested cerrado, which exists naturally in a state of non-continuous canopy cover. The cerrado will naturally have a lower NDFI than a closed-canopy forest, but that does not mean it is degraded. This difference alludes to the difficulty in classifying a degraded forest based on a single image alone. 
 
-To see the difference in forest characterization with canopy cover, see the difference in NDFI between a dense congruent canopy in Rondônia (top), and a thinner forested cerrado in Mato Groso (bottom, images courtesy Google Earth):
+To see the difference in forest characterization with canopy cover, see the difference in NDFI between a dense congruent canopy in Rondônia (top), and a thinner forested cerrado in Mato Grosso (bottom, images courtesy Google Earth):
 
 .. image:: https://raw.githubusercontent.com/bullocke/ge-cdd/master/images/thick_and_thin_exs.jpg
 

@@ -95,7 +95,6 @@
 <li class="toctree-l1"><a class="reference internal" href="acre.html">Example: Acre, Brazil</a></li>
 </ul>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="sampling_background.html">Sampling Background</a></li>
 <li class="toctree-l1"><a class="reference internal" href="drawing_sample.html">Sampling</a></li>
 <li class="toctree-l1"><a class="reference internal" href="interpretation.html">Interpretation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="estimation.html">Accuracy and Estimation</a></li>
@@ -165,7 +164,7 @@
             
   <div class="section" id="training-data">
 <h1>Training Data<a class="headerlink" href="#training-data" title="Permalink to this headline">¶</a></h1>
-<p>Training data can be created in a variety of ways, but the algorithm expects a Feature Collection of points with unique land cover labels identified with a ‘label’ attribute. For example, forests can have a ‘label’ attribute of 1, agriculture as 2, and so on. One simple, although possibly problematic, method to develop training data is to simply use the data on the Google Earth Engine and creating a Feature Collection for each land cover.</p>
+<p>Training data can be created in a variety of ways, but the algorithm expects a Feature Collection of points with unique land cover labels identified with a ‘label’ attribute. For example, forests can have a ‘label’ attribute of 1, agriculture as 2, and so on. One simple method to develop training data is to simply use the data on the Google Earth Engine and creating a Feature Collection for each land cover.</p>
 <ol class="arabic simple">
 <li>While in the Earth Engine, navigate to Geometry Imports -&gt; + new layer.</li>
 <li>In the layer configuration, given the layer a name, set the type to FeatureCollection, and give it a ‘label’ property with a unique integer identifier.</li>
