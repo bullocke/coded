@@ -27,6 +27,7 @@ _____________
    training_data
    module_parameters
    running
+   dataFuncs
    acre
 
 Sampling

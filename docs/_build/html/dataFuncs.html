@@ -1,0 +1,290 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Data Utility Functions &mdash; coded 0.2 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Example: Acre, Brazil" href="acre.html" />
+    <link rel="prev" title="Running CODED" href="running.html" /> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> coded
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.2
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="background.html">Background and Motivation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="definitions.html">Definitions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Timeseries Examples</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="algorithm.html">Algorithm Description</a></li>
+<li class="toctree-l1"><a class="reference internal" href="training_data.html">Training Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="module_parameters.html">Parameters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="running.html">Running CODED</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Data Utility Functions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#makeimage">makeImage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#reducebands">reduceBands</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="acre.html">Example: Acre, Brazil</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="drawing_sample.html">Sampling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="interpretation.html">Interpretation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="estimation.html">Accuracy and Estimation</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">coded</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>Data Utility Functions</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/dataFuncs.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="data-utility-functions">
+<h1>Data Utility Functions<a class="headerlink" href="#data-utility-functions" title="Permalink to this headline">¶</a></h1>
+<p><em>Utility functions for dealing with CODED outputs</em></p>
+<p>Helpful functions for dealing with CODED outputs can be found in the dataUtils file:</p>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="kd">var</span> <span class="nx">dataUtils</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">&#39;users/bullocke/coded:v0.2/dataUtils&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="section" id="makeimage">
+<h2>makeImage<a class="headerlink" href="#makeimage" title="Permalink to this headline">¶</a></h2>
+<dl class="docutils">
+<dt>Usage:</dt>
+<dd>makeImage(arrayImage, column, prefix, startYear, endYear)</dd>
+<dt>Description:</dt>
+<dd>Make a saveable image from the data array output that is retured by CODED.</dd>
+<dt>Arguments:</dt>
+<dd><p class="first">arrayImage (array): Output array image from CODED</p>
+<p>column (int): column of multi-dimensional array image to turn into image.</p>
+<p>prefix (string): Prefix to give to all bands in output image</p>
+<p>startYear (int): First year in study period.</p>
+<p class="last">endYear (int): Last year in study period.</p>
+</dd>
+</dl>
+<p><strong>Example:</strong></p>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="kd">var</span> <span class="nx">disturbances</span> <span class="o">=</span> <span class="nx">dataUtils</span><span class="p">.</span><span class="nx">makeImage</span><span class="p">(</span><span class="nx">results</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;dist_&#39;</span><span class="p">,</span> <span class="nx">params</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;start&#39;</span><span class="p">),</span> <span class="nx">params</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;end&#39;</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="reducebands">
+<h2>reduceBands<a class="headerlink" href="#reducebands" title="Permalink to this headline">¶</a></h2>
+<dl class="docutils">
+<dt>Usage:</dt>
+<dd>reduceBands(changeBands, params)</dd>
+<dt>Description:</dt>
+<dd>Reduce the number of output bands to just save information about the number of disturbances specified in the parameter file.</dd>
+<dt>Arguments:</dt>
+<dd><p class="first">changeBands (image): Images representing CODED output disturbances, magnitude, post-disturbance land cover, and change difference.</p>
+<p class="last">parameters (dictionary): CODED parameter dictionary.</p>
+</dd>
+</dl>
+<p><strong>Example:</strong></p>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="kd">var</span> <span class="nx">results</span> <span class="o">=</span> <span class="nx">codedUtils</span><span class="p">.</span><span class="nx">submitCODED</span><span class="p">(</span><span class="nx">saveRegion</span><span class="p">,</span> <span class="nx">params</span><span class="p">,</span> <span class="nx">trainingData</span><span class="p">)</span>
+
+<span class="kd">var</span> <span class="nx">disturbances</span> <span class="o">=</span> <span class="nx">dataUtils</span><span class="p">.</span><span class="nx">makeImage</span><span class="p">(</span><span class="nx">results</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;dist_&#39;</span><span class="p">,</span> <span class="nx">params</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;start&#39;</span><span class="p">),</span> <span class="nx">params</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;end&#39;</span><span class="p">))</span>
+<span class="kd">var</span> <span class="nx">magnitude</span> <span class="o">=</span> <span class="nx">dataUtils</span><span class="p">.</span><span class="nx">makeImage</span><span class="p">(</span><span class="nx">results</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;mag_&#39;</span><span class="p">,</span> <span class="nx">params</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;start&#39;</span><span class="p">),</span> <span class="nx">params</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;end&#39;</span><span class="p">))</span>
+<span class="kd">var</span> <span class="nx">postChange</span> <span class="o">=</span> <span class="nx">dataUtils</span><span class="p">.</span><span class="nx">makeImage</span><span class="p">(</span><span class="nx">results</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;post_&#39;</span><span class="p">,</span> <span class="nx">params</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;start&#39;</span><span class="p">),</span> <span class="nx">params</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;end&#39;</span><span class="p">))</span>
+<span class="kd">var</span> <span class="nx">difference</span> <span class="o">=</span> <span class="nx">dataUtils</span><span class="p">.</span><span class="nx">makeImage</span><span class="p">(</span><span class="nx">results</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="s1">&#39;dif_&#39;</span><span class="p">,</span> <span class="nx">params</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;start&#39;</span><span class="p">),</span> <span class="nx">params</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;end&#39;</span><span class="p">))</span>
+
+<span class="kd">var</span> <span class="nx">changeBands</span> <span class="o">=</span> <span class="nx">disturbances</span><span class="p">.</span><span class="nx">addBands</span><span class="p">([</span><span class="nx">magnitude</span><span class="p">,</span> <span class="nx">postChange</span><span class="p">,</span> <span class="nx">difference</span><span class="p">])</span>
+<span class="kd">var</span> <span class="nx">save_output</span> <span class="o">=</span> <span class="nx">ee</span><span class="p">.</span><span class="nx">Image</span><span class="p">(</span><span class="nx">dataUtils</span><span class="p">.</span><span class="nx">reduceBands</span><span class="p">(</span><span class="nx">changeBands</span><span class="p">,</span> <span class="nx">params</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="acre.html" class="btn btn-neutral float-right" title="Example: Acre, Brazil" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="running.html" class="btn btn-neutral" title="Running CODED" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, Eric Bullock.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.2',
+            LANGUAGE:'None',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  <script type="text/javascript" src="_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
