@@ -9,7 +9,7 @@ First, load the CODED module:
 
 .. code-block:: javascript
 
-  var cddUtils = require('users/bullocke/coded:v0.2/changeDetection')
+  var codedUtils = require('users/bullocke/coded:v0.2/changeDetection')
 
 Define the study area, with 'region' being an import or path to a feature. 
 
@@ -45,7 +45,7 @@ Call the main function of CODED to retrieve the results:
 
 .. code-block:: javascript
 
-  var results = cddUtils.submitCODED(saveRegion, params, trainingData)
+  var results = codedUtils.submitCODED(saveRegion, params, trainingData)
 
 The output of the change detection is an `array image`_. At every pixel location there is an array matrix, with a row for every year in the study period and the columns corresponding to the a change flag (1 = change, 0 = no change), change magnitude, post-change land cover, NDFI difference band, and a forest flag (1 = forest in training period). 
 

@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Data Utility Functions &mdash; coded 0.2 documentation</title>
+  <title>Utility Functions &mdash; coded 0.2 documentation</title>
   
 
   
@@ -92,7 +92,8 @@
 <li class="toctree-l1"><a class="reference internal" href="training_data.html">Training Data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_parameters.html">Parameters</a></li>
 <li class="toctree-l1"><a class="reference internal" href="running.html">Running CODED</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Data Utility Functions</a><ul>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Utility Functions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#submitcoded">submitCODED</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#makeimage">makeImage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#reducebands">reduceBands</a></li>
 </ul>
@@ -148,7 +149,7 @@
     
       <li><a href="index.html">Docs</a> &raquo;</li>
         
-      <li>Data Utility Functions</li>
+      <li>Utility Functions</li>
     
     
       <li class="wy-breadcrumbs-aside">
@@ -167,12 +168,31 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="data-utility-functions">
-<h1>Data Utility Functions<a class="headerlink" href="#data-utility-functions" title="Permalink to this headline">¶</a></h1>
-<p><em>Utility functions for dealing with CODED outputs</em></p>
-<p>Helpful functions for dealing with CODED outputs can be found in the dataUtils file:</p>
+  <div class="section" id="utility-functions">
+<h1>Utility Functions<a class="headerlink" href="#utility-functions" title="Permalink to this headline">¶</a></h1>
+<p><em>Utility functions for running CODED and dealing with outputs.</em></p>
+<p>To load all the necessary functions for the running CODED, the changeDetection and dataUtils files must be laoded:</p>
 <div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="kd">var</span> <span class="nx">dataUtils</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">&#39;users/bullocke/coded:v0.2/dataUtils&#39;</span><span class="p">)</span>
+<span class="kd">var</span> <span class="nx">codedUtils</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">&#39;users/bullocke/coded:v0.2/changeDetection&#39;</span><span class="p">)</span>
 </pre></div>
+</div>
+<div class="section" id="submitcoded">
+<h2>submitCODED<a class="headerlink" href="#submitcoded" title="Permalink to this headline">¶</a></h2>
+<dl class="docutils">
+<dt>Usage:</dt>
+<dd>submitCODED(saveRegion, params, trainingData)</dd>
+<dt>Description:</dt>
+<dd>Main function for running CODED.</dd>
+<dt>Arguments:</dt>
+<dd><p class="first">saveRegion (Feature Collection): Geographic region to run the analysis.</p>
+<p>params (Dictionary): Dictionary defining CODED parameters.</p>
+<p class="last">trainingData (Feature Collection): Feature points containing training data with unique land cover labels identified in the ‘label’ attribute.</p>
+</dd>
+</dl>
+<p><strong>Example:</strong></p>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="kd">var</span> <span class="nx">results</span> <span class="o">=</span> <span class="nx">codedUtils</span><span class="p">.</span><span class="nx">submitCODED</span><span class="p">(</span><span class="nx">saveRegion</span><span class="p">,</span> <span class="nx">params</span><span class="p">,</span> <span class="nx">trainingData</span><span class="p">)</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="makeimage">
 <h2>makeImage<a class="headerlink" href="#makeimage" title="Permalink to this headline">¶</a></h2>

@@ -1,13 +1,36 @@
-Data Utility Functions
+Utility Functions
 ======================
 
-*Utility functions for dealing with CODED outputs*
+*Utility functions for running CODED and dealing with outputs.* 
 
-Helpful functions for dealing with CODED outputs can be found in the dataUtils file:
+To load all the necessary functions for the running CODED, the changeDetection and dataUtils files must be laoded:
 
 .. code-block:: javascript
 
   var dataUtils = require('users/bullocke/coded:v0.2/dataUtils')
+  var codedUtils = require('users/bullocke/coded:v0.2/changeDetection')
+
+submitCODED
+-----------
+
+Usage:
+  submitCODED(saveRegion, params, trainingData)
+
+Description:
+  Main function for running CODED.
+
+Arguments:
+  saveRegion (Feature Collection): Geographic region to run the analysis. 
+
+  params (Dictionary): Dictionary defining CODED parameters.
+
+  trainingData (Feature Collection): Feature points containing training data with unique land cover labels identified in the 'label' attribute. 
+
+**Example:**
+
+.. code-block:: javascript
+
+   var results = codedUtils.submitCODED(saveRegion, params, trainingData)
 
 makeImage
 ---------
