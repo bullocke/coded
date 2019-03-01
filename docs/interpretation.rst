@@ -3,6 +3,6 @@ Interpretation
 
 *Sample interpretation*
 
-This section is incomplete. Tools and guidance for sampling and estimation on the Earth Engine will be added to the `Earth Engine Assessment Toolbox`_ as they are developed. 
+This section is incomplete. Tools and guidance for sampling and estimation on the Earth Engine can be found in the `Google Earth Engine Accuracy and Area Estimation Toolbox (AREA2)`_. 
 
-.. _Earth Engine Assessment Toolbox: https://github.com/bullocke/gee-assessment-tools 
+.. _Google Earth Engine Accuracy and Area Estimation Toolbox (AREA2): https://github.com/bullocke/area2 

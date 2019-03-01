@@ -7,8 +7,8 @@ To load all the necessary functions for the running CODED, the changeDetection a
 
 .. code-block:: javascript
 
-  var dataUtils = require('users/bullocke/coded:v0.2/dataUtils')
-  var codedUtils = require('users/bullocke/coded:v0.2/changeDetection')
+  var dataUtils = require('users/bullocke/coded:coded/dataUtils')
+  var codedUtils = require('users/bullocke/coded:coded/changeDetection')
 
 submitCODED
 -----------

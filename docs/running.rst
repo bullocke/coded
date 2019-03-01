@@ -9,7 +9,7 @@ First, load the CODED module:
 
 .. code-block:: javascript
 
-  var codedUtils = require('users/bullocke/coded:v0.2/changeDetection')
+  var codedUtils = require('users/bullocke/coded:coded/changeDetection')
 
 Define the study area, with 'region' being an import or path to a feature. 
 
@@ -101,7 +101,7 @@ If you create images of all the outputs the images will contain a lot of bands -
 
 .. code-block:: javascript
 
-  var dataUtils = require('users/bullocke/coded:v0.2/dataUtils')
+  var dataUtils = require('users/bullocke/coded:coded/dataUtils')
 
   var disturbances = dataUtils.makeImage(results, 0, 'dist_', start, end)
   var magnitude = dataUtils.makeImage(results, 1, 'mag_', start, end)
