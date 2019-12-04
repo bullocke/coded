@@ -30,14 +30,12 @@ _____________
    dataFuncs
    acre
 
-Sampling
+Tutorial
 ________
 
 .. toctree::
    :maxdepth: 2
 
-   drawing_sample
-   interpretation
-   estimation
+   background
    
 
