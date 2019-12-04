@@ -36,6 +36,9 @@ ________
 .. toctree::
    :maxdepth: 2
 
-   background
+   introduction
+   coded
+   sample
+   estimation 
    
 
