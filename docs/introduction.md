@@ -1,5 +1,5 @@
 # Estimating Area of Deforestation and Degradation using AREA2 and CODED
-![](figures/area2.png)
+![](images/area2.png)
 
 By Eric Bullock (bullocke@bu.edu)
 
