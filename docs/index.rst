@@ -25,10 +25,6 @@ _____________
 
    algorithm
    training_data
-   module_parameters
-   running
-   dataFuncs
-   acre
 
 Tutorial
 ________
