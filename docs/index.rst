@@ -5,36 +5,10 @@ This is the documentation for the Continuous Degradation Detection (CODED) algor
 
 .. _Google Earth Engine: https://earthengine.google.com/
 
-This documentation and the CODED algorithm are still very much a work in progress. For any questions please contact me at: bullocke@bu.edu. 
+The tutorials and documentation on this page are outdated and were designed for an older version of CODED. For the most recent documentation, please refer to the CODED guidebook, available in `English`_ and `French`_. 
 
-Background
-__________
+.. _English: https://docs.google.com/document/d/17H8EbiW_sQ1uaAG7jdWOUGufOyN9NcedMvr-BYGOQcE/edit?usp=sharing
+.. _French: https://docs.google.com/document/d/1lg3HIctEd3qFTpjFWoFe9HEt7yGba6SZcAHPVVmy_cc/edit?usp=sharing
 
-.. toctree::
-   :maxdepth: 2
 
-   background
-   definitions
-   examples 
-
-Documentation
-_____________
-
-.. toctree::
-   :maxdepth: 2
-
-   algorithm
-   training_data
-
-Tutorial
-________
-
-.. toctree::
-   :maxdepth: 2
-
-   introduction
-   coded
-   sample
-   estimation 
-   
-
+The old documentation for the initial version of CODED can be found :doc:`here <../old>`. 
