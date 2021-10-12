@@ -10,7 +10,7 @@ docopt==0.6.2
 scikit-learn==0.18.1
 scipy==0.18.1
 pymeanshift==0.2.1
-opencv-python==3.3.0.10
+opencv-python==3.4.0.12
 GDAL==1.11.1
 
 
