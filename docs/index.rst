@@ -6,6 +6,27 @@ Continuous Degradation Detection (CODED) is a forest monitoring application deve
 .. _Google Earth Engine: https://earthengine.google.com/
 .. _Bullock et al., (2020): https://doi.org/10.1016/j.rse.2018.11.011
 
+
+Background
+__________
+
+.. toctree::
+   :maxdepth: 2
+
+   background
+   definitions
+   algorithm
+   versions
+
+
+Tutorial (Javascript)
+_____________________
+
+.. toctree::
+   :maxdepth: 2
+
+   api_parameters
+
 Please refer to the following resources for further background information and tutorials for running CODED: 
 
 - `OpenMRV`_: An open-source resource for Forest Measurement, Reporting, and Verification (MRV). One Module in OpenMRV is CODED, with detailed background information, parameter descriptions, and examples using Javascript and a graphical user interface. 
