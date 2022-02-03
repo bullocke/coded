@@ -25,7 +25,7 @@ _____________________
 .. toctree::
    :maxdepth: 2
 
-   javascript_template
+   javascript_tutorial
    template
 
 
