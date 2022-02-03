@@ -8,8 +8,8 @@ Continuous Degradation Detection (CODED) is a forest monitoring application deve
 
 Please refer to the following resources for further background information and tutorials for running CODED: 
 
-- `OpenMRV`: An open-source resource for Forest Measurement, Reporting, and Verification (MRV). One Module in OpenMRV is CODED, with detailed background information, parameter descriptions, and examples using Javascript and a graphical user interface. 
-- `E-Learning`: An interactive course on CODED narrated by Dr. Eric Bullock. 
+1. `OpenMRV`: An open-source resource for Forest Measurement, Reporting, and Verification (MRV). One Module in OpenMRV is CODED, with detailed background information, parameter descriptions, and examples using Javascript and a graphical user interface. 
+2. `E-Learning`: An interactive course on CODED narrated by Dr. Eric Bullock. 
 
 .. _OpenMRV: http://openmrv.org/-/modules/mrv/modules_2/continuous-degradation-detection-coded
 .. _E-Learning: https://bit.ly/CODEDe-learning
