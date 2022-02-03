@@ -7,7 +7,9 @@ Parameters
 | Parameter         | Type     | Description                                |
 +===================+==========+============================================+
 | countryStudyArea  | boolean  | Use a country boundary for the study area  |
++-------------------+----------+--------------------------------------------+
 | country           | string   | Name of country to use as study area       |
++-------------------+----------+--------------------------------------------+
 | studyArea         | string   | Asset to use if countryStudyArea is false  |
 +-------------------+----------+--------------------------------------------+
 
@@ -20,8 +22,11 @@ Parameters
 | Parameter  | Type     | Description        |
 +============+==========+====================+
 | startDoy   | integer  | Start day of year  |
++------------+----------+--------------------+
 | endDoy     | integer  | End day of year    |
++------------+----------+--------------------+
 | startYear  | integer  | Start year         |
++------------+----------+--------------------+
 | endYear    | integer  | End year           |
 +------------+----------+--------------------+
 
@@ -32,9 +37,13 @@ Parameters
 | Parameter          | Type     | Description                                                |
 +====================+==========+============================================================+
 | useMask            | boolean  | Whether or not to apply a forest mask                      |
++--------------------+----------+------------------------------------------------------------+
 | getMaskFromHansen  | boolean  | Whether or not to generate a forest mask from UMD dataset  |
++--------------------+----------+------------------------------------------------------------+
 | forestMask         | string   | Path to asset if using mask and not from UMD               |
++--------------------+----------+------------------------------------------------------------+
 | focalMode          | integer  | Focal mode window size to apply to mask                    |
++--------------------+----------+------------------------------------------------------------+
 | treeCoverThreshold | integer  | Tree cover threshold for UMD dataset                       |
 +--------------------+----------+------------------------------------------------------------+
 
@@ -47,9 +56,13 @@ Parameters
 | Parameter              | Type     | Description                                                 |
 +========================+==========+=============================================================+
 | getTrainingFromHansen  | boolean  | Whether or not to sample the UMD dataset for training data  |
++------------------------+----------+-------------------------------------------------------------+
 | training               | string   | Path to feature collection with training data               |
++------------------------+----------+-------------------------------------------------------------+
 | prepTraining           | boolean  | Whether or not to cache predictor data and export asset     |
++------------------------+----------+-------------------------------------------------------------+
 | forestValue            | number   | The number associated with forest points                    |
++------------------------+----------+-------------------------------------------------------------+
 | numberOfPoints         | number   | Number of points to sample from UMD layer                   |
 +------------------------+----------+-------------------------------------------------------------+
 
@@ -62,6 +75,7 @@ Parameters
 | Parameter             | Type     | Description                                     |
 +=======================+==========+=================================================+
 | minObservations       | integer  | # of consecutive observations to flag a change  |
++-----------------------+----------+-------------------------------------------------+
 | chiSquareProbability  | float    | Threshold that controls sensitivity to change   |
 +-----------------------+----------+-------------------------------------------------+
 
@@ -72,10 +86,15 @@ Parameters
 | Parameter                | Type    | Description                                              |
 +==========================+=========+==========================================================+
 | outName                  | string  | Output asset ID                                          |
++--------------------------+---------+----------------------------------------------------------+
 | numberOfChangesToExport  | integer | # of disturbances to keep in output dataset              |
++--------------------------+---------+----------------------------------------------------------+
 | dateInt                  | boolean | Standardized dates to be 8 bit integers                  |
++--------------------------+---------+----------------------------------------------------------+
 | maskProb                 | boolean | Mask changes that do not have a change probability of 1  |
++--------------------------+---------+----------------------------------------------------------+
 | flipMag                  | boolean | Make NDFI change magnitude positive                      |
++--------------------------+---------+----------------------------------------------------------+
 | exportLayers             | object  | Layers to export in image stack                          |
 +--------------------------+---------+----------------------------------------------------------+
 
@@ -88,11 +107,17 @@ Parameters
 | Parameter      | Type     | Description                                         |
 +================+==========+=====================================================+
 | exportInGrids  | boolean  | Whether or not to split output into multiple tasks  |
++----------------+----------+-----------------------------------------------------+
 | gridFolder     | string   | Path to folder to save gridded results              |
++----------------+----------+-----------------------------------------------------+
 | gridSize       | number   | Length of grid edge in degrees                      |
++----------------+----------+-----------------------------------------------------+
 | gridPrefix     | string   | Prefix for name to output grid assets               |
++----------------+----------+-----------------------------------------------------+
 | gridMin        | number   | Index of first grid to export                       |
++----------------+----------+-----------------------------------------------------+
 | gridMax        | number   | Index of last grid to export                        |
++----------------+----------+-----------------------------------------------------+
 | predefinedGrid | string   | Path to feature collection with predefined grid     |
 +----------------+----------+-----------------------------------------------------+
 
