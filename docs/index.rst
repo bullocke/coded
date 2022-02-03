@@ -25,7 +25,16 @@ _____________________
 .. toctree::
    :maxdepth: 2
 
-   api_parameters
+   javascript_template
+   template
+
+
+Tutorial (GUI)
+______________
+
+`Tutorial`_
+
+.. _Tutorial: https://github.com/openmrv/MRV/blob/main/Modules_2/coded.md#30-running-coded-with-a-graphical-user-interface
 
 Please refer to the following resources for further background information and tutorials for running CODED: 
 
