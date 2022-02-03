@@ -32,9 +32,9 @@ _____________________
 Tutorial (GUI)
 ______________
 
-`Tutorial`_
+- `Running CODED using a GUI`_
 
-.. _Tutorial: https://github.com/openmrv/MRV/blob/main/Modules_2/coded.md#30-running-coded-with-a-graphical-user-interface
+.. _Running CODED using a GUI: https://github.com/openmrv/MRV/blob/main/Modules_2/coded.md#30-running-coded-with-a-graphical-user-interface
 
 Please refer to the following resources for further background information and tutorials for running CODED: 
 
