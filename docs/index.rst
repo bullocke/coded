@@ -1,11 +1,11 @@
 Continuous Degradation Detection (CODED)
 ========================================
 
-This is the documentation for the Continuous Degradation Detection (CODED) algorithm. CODED is open source and can run on the `Google Earth Engine`_. CODED can be used to monitor and estimate forest degradation and deforestation. 
+Continuous Degradation Detection (CODED) is a forest monitoring application developed for mapping and statistically estimating the areas of forests affected by forest degradation. CODED is open source and can run on the `Google Earth Engine`_. CODED can be used to monitor and estimate forest degradation and deforestation. 
 
 .. _Google Earth Engine: https://earthengine.google.com/
 
-For the most recent documentation, please refer to the `CODED Guidebook (English)`_, or the `CODED Guidebook (French)`_.
+This webpage compiles the various documentation, tutorials, and background information on using CODED. For a general overview of the methodology, parameter descriptions, and description of the CODED application please refer to the `CODED Guidebook (English)`_, or the `CODED Guidebook (French)`_.
 
 .. _CODED Guidebook (English): https://docs.google.com/document/d/17H8EbiW_sQ1uaAG7jdWOUGufOyN9NcedMvr-BYGOQcE/edit?usp=sharing/
 .. _CODED Guidebook (French): https://docs.google.com/document/d/1lg3HIctEd3qFTpjFWoFe9HEt7yGba6SZcAHPVVmy_cc/edit?usp=sharing/
